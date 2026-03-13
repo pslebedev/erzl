@@ -1,49 +1,40 @@
+# Файл: tests/cases/Агрегат ExpiredAttachmentRequestSchedule/Сервисные алгоритмы/Конфиги.yaml
 suite_id: 5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9
-suite_name: EARS_Проверка_параметров
-description: Валидация влияния системных настроек на работу алгоритма
-created_at: '2026-03-12T10:10:00Z'
-status: new
-test_cases:
-  - case_id: 8a9b0c1d-2e3f-4a5b-6c7d-8e9f0a1b2c3d
-    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.mode"
-    priority: high
-    steps:
-      - action: 'Установить mode = 0'
-        expected_result: 'Система при проверке (шаг 1) не создает запись в run_control. Алгоритм не запускается.'
+suite_name: Сервисные алгоритмы - Конфиги
 
-  - case_id: b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e
-    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.startInterval"
-    priority: medium
+cases:
+  - case_id: 11a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c
+    name: "Успешное чтение полного конфигурационного файла"
+    description: "Проверка парсинга всех ключевых параметров из конфига джобы"
     steps:
-      - action: |-
-          1. Успешно завершить работу джобы. 
-          2. Попробовать запустить повторно через 10 минут, если startInterval = 1 (час).
-        expected_result: 'Условие (текущее время - start_date >= 1 час) не выполняется. Повторный запуск не происходит.'
+      - action: "Передать конфигурацию с заполненными dateProcess, expirationPeriod, maxCountRows, attachRequestStatusCode, countFromDateExpired"
+        expected: "Конфигурация передана"
+      - action: "Инициализировать агрегат ExpiredAttachmentRequestSchedule"
+        expected: "Агрегат успешно прочитал и сохранил все переданные значения"
 
-  - case_id: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
-    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.resetPeriod"
-    priority: medium
+  - case_id: 22b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d
+    name: "Применение значений по умолчанию при неполном конфиге"
+    description: "Если в конфиге отсутствуют необязательные параметры, должны примениться дефолтные значения"
     steps:
-      - action: |-
-          1. Создать в run_control запись is_running=1 с last_date = (текущее - 31 минута).
-          2. Параметр resetPeriod = 30 минут.
-        expected_result: 'Система считает процесс "зависшим" (шаг 2) и разрешает обновление записи (перезапуск).'
+      - action: "Передать конфигурацию без указания maxCountRows и countFromDateExpired"
+        expected: "Конфигурация передана"
+      - action: "Инициализировать агрегат"
+        expected: "Агрегат загружен, параметрам maxCountRows и countFromDateExpired присвоены дефолтные значения системы"
 
-  - case_id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
-    title: "Параметры: archivedPeriod и countFromDateApplyArchived"
-    priority: high
+  - case_id: 33c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e
+    name: "Чтение конфига с минимальным maxCountRows"
+    description: "Проверка корректной инициализации при maxCountRows = 1"
     steps:
-      - action: |-
-          1. Установить archivedPeriod = 5.
-          2. Установить countFromDateApplyArchived = 1 (date_apply_reg).
-          3. Создать черновик с date_apply_reg = (сегодня - 4 дня).
-        expected_result: 'Заявление НЕ попадает в выборку GetExpiredAttachmentRequestQuery (срок 4 < 5).'
+      - action: "Задать в конфиге maxCountRows = 1"
+        expected: "Конфиг сохранен"
+      - action: "Запустить инициализацию"
+        expected: "Параметр maxCountRows = 1 успешно прочитан, ошибки валидации не возникло"
 
-  - case_id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
-    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.queryMaxCountRows"
-    priority: low
+  - case_id: 44d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f
+    name: "Проверка фильтрации по attachRequestStatusCode"
+    description: "Убедиться, что агрегат корректно считывает целевой статус для поиска заявок"
     steps:
-      - action: |-
-          1. Создать в базе 500 просроченных черновиков.
-          2. Установить queryMaxCountRows = 100.
-        expected_result: 'В событии ExpiredAttachmentRequestScheduleFiredEvent передается maxCountRows=100. За одну итерацию обрабатывается только 100 записей.'
+      - action: "Указать в конфиге attachRequestStatusCode = 'arDraft'"
+        expected: "Конфигурация передана"
+      - action: "Проверить параметры инициализированного агрегата"
+        expected: "Агрегат настроен на поиск только заявок со статусом 'arDraft'"

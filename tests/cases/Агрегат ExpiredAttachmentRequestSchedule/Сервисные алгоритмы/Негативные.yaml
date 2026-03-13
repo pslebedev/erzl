@@ -1,29 +1,49 @@
-suite_id: 7c8b9a01-d2e3-4f56-8a7b-9c0d1e2f3a4b
-suite_name: EARS_Негативные
-description: Проверка обработки ошибок и зависших состояний
-created_at: '2026-03-12T10:05:00Z'
-status: new
-test_cases:
-  - case_id: 11223344-5566-7788-9900-aabbccddeeff
-    title: "AC.1 Ошибка при отсутствии обязательных параметров (AT_EARS_001)"
-    priority: high
-    steps:
-      - action: 'Запустить алгоритм, когда archivedPeriod = null (при включенном поиске)'
-        expected_result: |-
-          Запись в расписании переходит в status=3. error = "AT_EARS_001 - Невозможно продолжить поиск..."
+# Файл: tests/cases/Агрегат ExpiredAttachmentRequestSchedule/Сервисные алгоритмы/Негативные.yaml
+suite_id: 8c7b6a5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d
+suite_name: Сервисные алгоритмы - Негативные
 
-  - case_id: ff00ee11-dd22-cc33-bb44-aa5599887766
-    title: "3.1 Обработка зависшей записи в расписании (status 1)"
-    priority: high
+cases:
+  - case_id: 55e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a
+    name: "Ошибка валидации при отрицательном expirationPeriod"
+    description: "Проверка, что алгоритм не запускается и выдает ошибку, если период просрочки указан меньше нуля"
     steps:
-      - action: 'Запуск, когда в расписании на сегодня уже есть статус 1, а resetPeriod превышен'
-        expected_result: |-
-          Зависшая запись сбрасывается в status=3 (код ошибки AT_EARS_003), создается новая запись со статусом 1.
+      - action: "Передать конфигурацию с expirationPeriod = -5"
+        expected: "Конфигурация передана"
+      - action: "Инициализировать агрегат ExpiredAttachmentRequestSchedule"
+        expected: "Ошибка инициализации/валидации: expirationPeriod не может быть отрицательным"
 
-  - case_id: 22334455-6677-8899-00aa-bbccddeeff11
-    title: "6.4 Прерывание работы по истечению endTime (AT_EARS_004)"
-    priority: medium
+  - case_id: 66f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b
+    name: "Ошибка при некорректном лимите maxCountRows"
+    description: "Лимит обрабатываемых записей за один запуск должен быть больше нуля"
     steps:
-      - action: 'Во время обработки списка заявлений наступает время > run.endTime'
-        expected_result: |-
-          Процесс прекращается. status = 3, error = AT_EARS_004. Обработанные записи сохраняются, остальные остаются в старых статусах.
+      - action: "Передать в конфигурации maxCountRows = 0 (или -1)"
+        expected: "Конфигурация передана"
+      - action: "Запустить джобу ExpiredAttachmentRequestScheduleFiredEvent"
+        expected: "Выброшено исключение или ошибка валидации: лимит заявок должен быть > 0"
+
+  - case_id: 77a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c
+    name: "Отсутствие обязательного параметра dateProcess"
+    description: "Проверка обработки пустого значения даты запуска алгоритма (профилактика NullPointerException)"
+    steps:
+      - action: "Передать конфигурацию без указания dateProcess (null)"
+        expected: "Конфигурация передана"
+      - action: "Запустить алгоритм"
+        expected: "Выброшена понятная ошибка об отсутствии обязательного параметра, алгоритм прервал работу корректно"
+
+  - case_id: 88b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d
+    name: "Некорректный флаг countFromDateExpired"
+    description: "Флаг отсчета даты должен принимать строго определенные значения (0 - решение врача, 1 - дата подачи)"
+    steps:
+      - action: "Передать в конфигурации countFromDateExpired = 99"
+        expected: "Конфигурация передана"
+      - action: "Запустить поиск просроченных заявок"
+        expected: "Ошибка валидации параметра: неизвестный тип отсчета даты"
+
+  - case_id: 99c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3e
+    name: "Неизвестный статус attachRequestStatusCode"
+    description: "Попытка поиска заявок по несуществующему коду статуса"
+    steps:
+      - action: "Передать конфигурацию с attachRequestStatusCode = 'arUnknownStatus123'"
+        expected: "Конфигурация передана"
+      - action: "Запустить алгоритм поиска"
+        expected: "Алгоритм не находит ни одной заявки и корректно завершает работу (или выдает ошибку валидации статуса на старте)"
