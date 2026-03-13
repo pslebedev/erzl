@@ -6,7 +6,7 @@ status: new
 created_by: Inna Zaikovskaya
 test_cases:
   - case_id: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
-    name: "Успешное закрытие просроченной заявки (отсчет от date_apply_reg)"
+    title: "Успешное закрытие просроченной заявки (отсчет от date_apply_reg)"
     description: "Проверка закрытия заявки, если прошло больше expirationPeriod дней с момента date_apply_reg (countFromDateExpired = 1)"
     steps:
       - action: "Создать заявку прикрепления со статусом 'arDraft' и date_apply_reg = (сегодня - expirationPeriod - 1 день)"
@@ -17,7 +17,7 @@ test_cases:
         expected: "Статус заявки изменен на 'arApproved' (или целевой статус закрытия)"
 
   - case_id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
-    name: "Успешное закрытие просроченной заявки (отсчет от date_doctor_decision)"
+    title: "Успешное закрытие просроченной заявки (отсчет от date_doctor_decision)"
     description: "Проверка закрытия заявки, если отсчет идет от решения врача (countFromDateExpired = 0)"
     steps:
       - action: "Создать заявку со статусом 'arDraft' и date_doctor_decision = (сегодня - expirationPeriod - 1 день)"
@@ -28,7 +28,7 @@ test_cases:
         expected: "Заявка переведена в статус просроченной/закрытой"
 
   - case_id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
-    name: "Обработка лимита заявок (maxCountRows)"
+    title: "Обработка лимита заявок (maxCountRows)"
     description: "Проверка, что алгоритм обрабатывает не более maxCountRows записей за один запуск"
     steps:
       - action: "Создать количество просроченных заявок, превышающее maxCountRows (например, maxCountRows + 5)"
@@ -39,7 +39,7 @@ test_cases:
         expected: "Статус изменился ровно у maxCountRows заявок, остальные остались в прежнем статусе"
 
   - case_id: f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c
-    name: "Проверка граничного условия (ровно expirationPeriod дней)"
+    title: "Проверка граничного условия (ровно expirationPeriod дней)"
     description: "Заявка, которой исполнилось ровно expirationPeriod дней, еще не считается просроченной"
     steps:
       - action: "Создать заявку с датой отсчета ровно (сегодня - expirationPeriod дней)"
