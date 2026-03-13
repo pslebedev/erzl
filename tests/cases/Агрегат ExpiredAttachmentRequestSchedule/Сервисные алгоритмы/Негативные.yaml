@@ -1,0 +1,29 @@
+suite_id: 7c8b9a01-d2e3-4f56-8a7b-9c0d1e2f3a4b
+suite_name: EARS_Негативные
+description: Проверка обработки ошибок и зависших состояний
+created_at: '2026-03-12T10:05:00Z'
+status: new
+test_cases:
+  - case_id: 11223344-5566-7788-9900-aabbccddeeff
+    title: "AC.1 Ошибка при отсутствии обязательных параметров (AT_EARS_001)"
+    priority: high
+    steps:
+      - action: 'Запустить алгоритм, когда archivedPeriod = null (при включенном поиске)'
+        expected_result: |-
+          Запись в расписании переходит в status=3. error = "AT_EARS_001 - Невозможно продолжить поиск..."
+
+  - case_id: ff00ee11-dd22-cc33-bb44-aa5599887766
+    title: "3.1 Обработка зависшей записи в расписании (status 1)"
+    priority: high
+    steps:
+      - action: 'Запуск, когда в расписании на сегодня уже есть статус 1, а resetPeriod превышен'
+        expected_result: |-
+          Зависшая запись сбрасывается в status=3 (код ошибки AT_EARS_003), создается новая запись со статусом 1.
+
+  - case_id: 22334455-6677-8899-00aa-bbccddeeff11
+    title: "6.4 Прерывание работы по истечению endTime (AT_EARS_004)"
+    priority: medium
+    steps:
+      - action: 'Во время обработки списка заявлений наступает время > run.endTime'
+        expected_result: |-
+          Процесс прекращается. status = 3, error = AT_EARS_004. Обработанные записи сохраняются, остальные остаются в старых статусах.

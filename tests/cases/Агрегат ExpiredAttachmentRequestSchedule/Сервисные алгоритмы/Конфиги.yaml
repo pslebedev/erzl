@@ -1,0 +1,49 @@
+suite_id: 5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9
+suite_name: EARS_Проверка_параметров
+description: Валидация влияния системных настроек на работу алгоритма
+created_at: '2026-03-12T10:10:00Z'
+status: new
+test_cases:
+  - case_id: 8a9b0c1d-2e3f-4a5b-6c7d-8e9f0a1b2c3d
+    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.mode"
+    priority: high
+    steps:
+      - action: 'Установить mode = 0'
+        expected_result: 'Система при проверке (шаг 1) не создает запись в run_control. Алгоритм не запускается.'
+
+  - case_id: b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e
+    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.startInterval"
+    priority: medium
+    steps:
+      - action: |-
+          1. Успешно завершить работу джобы. 
+          2. Попробовать запустить повторно через 10 минут, если startInterval = 1 (час).
+        expected_result: 'Условие (текущее время - start_date >= 1 час) не выполняется. Повторный запуск не происходит.'
+
+  - case_id: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
+    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.run.resetPeriod"
+    priority: medium
+    steps:
+      - action: |-
+          1. Создать в run_control запись is_running=1 с last_date = (текущее - 31 минута).
+          2. Параметр resetPeriod = 30 минут.
+        expected_result: 'Система считает процесс "зависшим" (шаг 2) и разрешает обновление записи (перезапуск).'
+
+  - case_id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
+    title: "Параметры: archivedPeriod и countFromDateApplyArchived"
+    priority: high
+    steps:
+      - action: |-
+          1. Установить archivedPeriod = 5.
+          2. Установить countFromDateApplyArchived = 1 (date_apply_reg).
+          3. Создать черновик с date_apply_reg = (сегодня - 4 дня).
+        expected_result: 'Заявление НЕ попадает в выборку GetExpiredAttachmentRequestQuery (срок 4 < 5).'
+
+  - case_id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
+    title: "Параметр: expiredAttachmentRequestScheduleFiredAlg.queryMaxCountRows"
+    priority: low
+    steps:
+      - action: |-
+          1. Создать в базе 500 просроченных черновиков.
+          2. Установить queryMaxCountRows = 100.
+        expected_result: 'В событии ExpiredAttachmentRequestScheduleFiredEvent передается maxCountRows=100. За одну итерацию обрабатывается только 100 записей.'
