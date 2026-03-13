@@ -1,0 +1,236 @@
+suite_id: a1d65913-6ddc-4b7c-8997-de13bd02757d
+suite_name: Название test suite
+description: Описание
+created_at: '2026-02-16T05:20:37Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 234c23f8-e474-49be-95ab-fba2342afbdd
+    title: 1. Проверка корректности входных параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле передать валидные зачения
+          insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+          dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+          startDate = Дата начала периода (обязательный)
+          endDate = Дата окончания периода (обязательный)
+          attachReqStatus = Статус заявления на прикрепление(не обязательный)
+          paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10)
+        expected_result: Переход на шаг 2
+    pre-conditions:
+      - action: параметр restQuery.maxPageSize = 10
+        expected_result: Результат предусловия
+
+  - case_id: f0bbb67e-67da-44ad-b4ea-32ea5b89f7a8
+    title: 2. Проверка корректности параметра paging
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          передать валидное тело запроса, при этом 
+          paging = <value>
+
+
+          параметр restQuery.maxPageSize = 10
+        expected_result: |-
+          В ответе отображается информация согласно запросу.
+
+
+          Если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10
+    pre-conditions:
+      - action: параметр restQuery.maxPageSize = 10
+        expected_result: Результат предусловия
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: '0'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: '5'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: '10'
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: пустое значение ""
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: не передавать
+
+  - case_id: 6cbfe209-1646-4aa6-b7db-cb5ed2c5e6ca
+    title: "2.1\_Проверка корректности параметра\_dateApplyReg"
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          передать валидное тело запроса и обязателньо передать  dateApplyReg, при этом <value>
+        expected_result: Переход на шаг 3
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: startDate  12-01-2026  < endDate 14-02-2026
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: startDate  2024-01-15 = endDate  2024-01-15
+
+  - case_id: 0d6d54b5-6815-4d96-b993-20514f0f1bc4
+    title: 3. Проверка поиска заявления на прикрепления по insured_person_id
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле передать валидные зачения
+          а так же :
+          <value>
+        expected_result: 'Переход на шаг4 '
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.insured_person_id = insuredPersonId (существующий)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.insured_person_id = insuredPersonId(несуществующий)
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: передать attach.attachment_request_approved.date_apply_reg >= dateApplyReg/startDate
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.date_apply_reg <= dateApplyReg/endDate
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.ref_attach_status_code_request = attachReqStatus
+
+  - case_id: e3942512-67e6-4780-996c-7c908be9d8a1
+    title: АС.3 Проверка возврата кода 200 при не найденном заяевлении на прикрепление
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле :
+
+        expected_result: Система возвращает ответ с кодом 200 (тело ответа с пустым списком)
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: передать не существующий insuredPersonId
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.date_apply_reg < dateApplyReg/startDate
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: attach.attachment_request_approved.date_apply_reg > dateApplyReg/endDate
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: передать  attachReqStatus не равный attach.attachment_request_approved.ref_attach_status_code_request профиля
+
+  - case_id: bc0337df-7ba9-4ddc-b7e3-953f2828cad6
+    title: 4. Проверка сортировки найденных прикреплений
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле передать валидные зачения
+          insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+          dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+          startDate = Дата начала периода (обязательный)
+          endDate = Дата окончания периода (обязательный)
+          attachReqStatus = Статус заявления на прикрепление(не обязательный)
+          paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10)
+        expected_result: |-
+          Код профиля прикрепление - в порядке возрастания (по полю attach.attachment_request_approved.ref_ratype_profile_code)
+          Дата регистрации заявления на прикрепление - в порядке убывания (по полю attach.attachment_request_approved.date_apply_reg)
+
+          Внутренний идентификатор заявления на прикрепление - в порядке убывания (по полю attach.attachment_request_approved.attachment_id)
+          переход на шаг 5
+
+  - case_id: 0498b194-e265-4f5e-ade8-73cfb1b989d9
+    title: 5. Проверка формирования тела ответа
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле передать валидные зачения
+          insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+          dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+          startDate = Дата начала периода (обязательный)
+          endDate = Дата окончания периода (обязательный)
+          attachReqStatus = Статус заявления на прикрепление(не обязательный)
+          paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10)
+        expected_result: |
+          Система возвращает тело ответа и код 200.
+          Если какой то необязательный параметр не передавался, то в теле будет null
+
+          pagingResult:
+          total = Доступное количество записей
+          page = Номер страницы
+          pageSize = Количество записей на странице
+
+          В соответсвии сколько записей было найдено
+          AttachmentRequestInfo:
+          attachmentId = ИД заявления на прикрепление
+          insuredAttr = Сведения о застрахованном лице
+          representativeAttr = Сведения о законном представителе
+          attachmentRequestContent = Сведения о заявлении на прикрепление
+          moInfoRequest = Сведения о медицинской организации
+          scanInfo = Сведения о скане заявления на прикрепление
+          attachmentRequestApproved = Сведения об утверждении или отказе в утверждении заявления на прикрепление
+          attachmentRequestDecisionSmo = Сведения о решении СМО по прикреплению ЗЛ при смене места жительства
+          decisionSmoSignatures = Блок, содержащий подписываемые данные решении СМО по прикреплению ЗЛ при смене места жительства
+          attachReqStatus = Код статуса прикрепления
+          attachReqStatusName = Наименование статуса прикрепления
+          version = Версия заявления
+          attachmentRequestChangeDate = Дата, время изменения заявления на прикрепление 
+          attachmentRequestSignatures = Блок, содержащий подписываемые данные заявления и информацию об электронной подписи
+
+  - case_id: e2bcd07b-4605-489c-bc2e-b4331deb4b15
+    title: 6. Получение кода 200
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          в теле передать валидные зачения
+          insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+          dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+          startDate = Дата начала периода (обязательный)
+          endDate = Дата окончания периода (обязательный)
+          attachReqStatus = Статус заявления на прикрепление(не обязательный)
+          paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10)
+        expected_result: |-
+          получено код 200
+          Алгоритм завершен

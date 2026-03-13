@@ -1,0 +1,181 @@
+suite_id: 0ed8c413-651f-473b-adfc-e37291526ca7
+suite_name: Позитивные проверки команды GetTimeExpiredAttachmentQuery
+description: Проверка успешных сценариев работы команды поиска учетных прикреплений с истекшим сроком действия
+created_at: '2026-01-14T13:03:01Z'
+status: new
+test_cases:
+  - case_id: dab19673-006d-4866-ad0e-abb04cf7a4b2
+    title: 1. Проверка поиска единственного прикрепления с истекшим сроком действия (attach.attachment.date_end < data.dateProcess)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сформировано событие TimeExpiredAttachmentScheduleFiredEvent согласно параматрам
+        expected_result: |-
+          Система выполняет поиск в таблице attach.attachment по условиям (через И):
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = attachTypeCode
+          attach.attachment.date_end < dateProcess
+          Максимальное количество записей для отбора = maxCountRows
+      - action: Проверить результат выполнения команды GetTimeExpiredAttachmentQuery
+        expected_result: |+
+          Система возвращает список прикреплений.
+          В таблице  attach.time_expired_attach_schedule.attach_count_found + 1
+
+          В списке найдено одно прикрепление, соответствующее условиям поиска.
+          Прикрепление имеет:
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = attachTypeCode
+          attach.attachment.date_end < data.dateProcess
+
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существует прикрепление:
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = 2 (существует в справочнике ref.attach_type)
+          attach.attachment.date_end = текущая дата минус 5 дней (< data.dateProcess)
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 2
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 50
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 100
+        expected_result: ''
+
+  - case_id: 68e724f7-0980-4f05-95b6-9a892cc7789d
+    title: 2. Проверка поиска прикрепления с истекшим сроком действия (attach.attachment.date_begin + data.expirationPeriod - 1 < data.dateProcess)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сформировано событие TimeExpiredAttachmentScheduleFiredEvent согласно параматрам
+        expected_result: |-
+          Система выполняет поиск в таблице attach.attachment по условиям (через И):
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = attachTypeCode
+          attach.attachment.date_end  < attach.attachment.date_begin + expirationPeriod - 1< dateProcess
+          Максимальное количество записей для отбора = maxCountRows
+      - action: Проверить результат выполнения команды GetTimeExpiredAttachmentQuery
+        expected_result: |
+          Система возвращает список прикреплений.
+          В таблице  attach.time_expired_attach_schedule.attach_count_found + 1
+
+          В списке найдено одно прикрепление, соответствующее условиям поиска.
+          Прикрепление имеет:
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = attachTypeCode
+          attach.attachment.date_end < attach.attachment.date_begin + expirationPeriod - 1< dateProcess 
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существует прикрепление:
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = 2 (существует в справочнике ref.attach_type)
+          attach.attachment.date_end = attach.attachment.date_begin + expirationPeriod - 1< dateProcess 
+
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 2
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 50
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 100
+        expected_result: ''
+
+  - case_id: c86611f5-1af8-4058-8825-dd7622b4c0fd
+    title: 3. Проверка поиска нескольких прикреплений с ограничением timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сформировано событие TimeExpiredAttachmentScheduleFiredEvent согласно параматрам
+        expected_result: |-
+          Система выполняет поиск в таблице attach.attachment по условиям (через И):
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = attachTypeCode
+          attach.attachment.date_end < dateProcess 
+          Максимальное количество записей для отбора = maxCountRows
+      - action: Проверить результат выполнения команды GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система возвращает список прикреплений.
+          В таблице  attach.time_expired_attach_schedule.attach_count_found + 5
+
+          Количество найденных прикреплений не превышает значение timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 5.
+
+          Все прикрепления в списке соответствуют условиям поиска.
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существуют прикрепления (более 5 записей):
+          attach.attachment.is_active = 1
+          attach.attachment.ref_attach_type_code = 2 (существует в справочнике ref.attach_type)
+          attach.attachment.date_end < dateProcess 
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 2
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 365
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 5
+        expected_result: ''
+
+  - case_id: c4c44c3b-ba8c-40c5-85ab-d6cdb2250311
+    title: 4. Проверка поиска прикреплений с различными типами прикреплений (data.attachTypeCode)
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сформировано событие TimeExpiredAttachmentScheduleFiredEvent согласно параматрам
+        expected_result: |
+          Система выполняет поиск в таблице attach.attachment по условиям
+      - action: Проверить результат выполнения команды GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система возвращает список прикреплений.
+          В таблице  attach.time_expired_attach_schedule.attach_count_found + 1
+
+          Все найденные прикрепления имеют attach.attachment.ref_attach_type_code = <attachTypeCode>.
+          Прикрепления других типов не включены в результат.
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: attachTypeCode
+            value: '2'
+      - iteration_id: '2'
+        params:
+          - name: attachTypeCode
+            value: '3'
+      - iteration_id: '3'
+        params:
+          - name: attachTypeCode
+            value: '5'
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существуют прикрепления с истекшим сроком действия
+          для различных типов прикреплений (2, 3, 5).
+          В справочнике ref.attach_type существуют записи с code = 2, 3, 5.
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = <attachTypeCode>
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 365
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 100
+        expected_result: ''
+
+  - case_id: 7f26d2a5-7e0e-4aea-8220-c389cd3e6a51
+    title: 5. Проверка возврата пустого списка при отсутствии истекших прикреплений
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сформировано событие TimeExpiredAttachmentScheduleFiredEvent согласно параметрам
+        expected_result: 'Система выполняет поиск в таблице attach.attachment по условиям '
+      - action: Проверить результат выполнения команды GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система возвращает пустой список прикреплений.
+
+          В таблице  attach.time_expired_attach_schedule.attach_count_found + 0
+          Прикреплений, соответствующих условиям поиска, не найдено.
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment НЕТ прикреплений, соответствующих условиям поиска:
+          - Нет прикреплений с is_active = 1 и ref_attach_type_code = 2
+          - ИЛИ все прикрепления имеют date_end >= текущая дата
+          - ИЛИ все прикрепления имеют attach.attachment.date_begin + data.expirationPeriod - 1 >= текущая дата
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 2
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 365
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = 100
+        expected_result: ''

@@ -1,0 +1,87 @@
+suite_id: f25c1887-98c3-4b6c-85e3-c3adba99941a
+suite_name: TAS_Негативные
+description: Описание
+created_at: '2026-01-08T09:51:08Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 1816c42c-2460-4790-8e58-88d086dad71e
+    title: Проверка НЕ возможности запуска процесса поиска истекших прикреплений ЗЛ, достигших совершеннолетия.
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 4b0f1ab1-92a0-41a8-ad76-eaa6feb704b8
+    title: "AC.1 Проверка формирования ошибки при отсутствии обязательных параметров для\_формирования события TeenagerAttachmentScheduleFiredEvent"
+    description: Описание
+    priority: high
+    steps:
+      - action: <param>
+        expected_result: |
+          В таблице  attach.teenager_time_expired_attach_schedule фиксируется завершение работы
+          date_end = current_timestamp
+          status = 3
+          error = "AT_TASF_001 - Невозможно продолжить поиск и закрытие/обновление прикреплений. Параметр {0} не заполнен или заполнен неверно."
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: Значение параметра в config teenagerAttachmentScheduleFired.attachСloseСode отсутствует в справочнике ref.attach_close(code)
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: Значение параметра в config teenagerAttachmentScheduleFired.periodAfterBirthday не заполнен
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: Значение параметра в config teenagerAttachmentScheduleFired.periodAfterBirthday строка
+      - iteration_id: '4'
+        params:
+          - name: param
+            value: Значение параметра в config teenagerAttachmentScheduleFired.periodAfterBirthday не целое число
+      - iteration_id: '5'
+        params:
+          - name: param
+            value: Значение параметра в config teenagerAttachmentScheduleFired.attachTypeCode отсутствует в справочнике ref.attach_type(code)
+      - iteration_id: '6'
+        params:
+          - name: param
+            value: Не заполнен параметр в config teenagerAttachmentScheduleFired.moAgeCategoryCodeChildren
+      - iteration_id: '7'
+        params:
+          - name: param
+            value: Не заполнен параметр в config (teenagerAttachmentScheduleFired.moAgeCategoryCodeMix
+      - iteration_id: '8'
+        params:
+          - name: param
+            value: Не заполнено несколько параметров
+
+  - case_id: 640c35cd-ac7d-4033-9a08-6ff24ccb572d
+    title: "AC.2 Проверка формирования непредвиденной ошибки при поиске\_ GetNotTeenagerExpiredAttachmentQuery прикреплений ЗЛ, достигших совершеннолетия"
+    description: Описание
+    priority: high
+    steps:
+      - action: 'При выполнении GetNotTeenagerExpiredAttachmentQuery получена непредвиденная ошибка '
+        expected_result: |-
+          В таблице  attach.teenager_time_expired_attach_schedule фиксируется завершение работы
+          date_end = current_timestamp
+          status = 3
+          error = "AT_TASF_002 - При выполнении поиска прикреплений ЗЛ, достигших совершеннолетия, получена ошибка: {0}."
+
+  - case_id: 080553db-1105-4102-b6f9-9f97b8046079
+    title: Проверка формирования ошибки, если приложение остановлено
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: AT_TASF_005 Остановлено приложение.
+
+  - case_id: e28054b5-fd74-4ae0-80e1-d1ad66ced40c
+    title: Проверка формирования ошибки, если продолжить работу не разрешено
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: ' AT_TASF_004 Работа запрещена.'

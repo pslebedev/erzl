@@ -1,0 +1,123 @@
+suite_id: 0b7a6a87-d785-4d93-8398-1b0d6feb2b56
+suite_name: Позитивные
+description: Описание
+created_at: '2025-11-21T10:31:23Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: f2fe88c3-cd28-412f-8c5d-9be5718104ff
+    title: Проверка закрытия прикрепления в БД для события FerzlAttachmentClosedResultEvent
+    description: Описание
+    priority: medium
+    steps:
+      - action: Отправить событие событие FerzlAttachmentClosedResultEvent для закрытия актуального прикрепления в БД
+        expected_result: |-
+          В БД в таблице attach.attachment изменены атрибуты:
+            attachment.id = {0}
+            attachment.date_end = data/attachment/dateAttachEnd
+            attachment.ref_attach_status_code_attach = A_CLOSED
+            attachment.ref_attach_status_ferzl_code = data/attachmentResult/ferzlResponseAttach/attachStatus
+            attachment.ferzl_transferred = 2
+            attachment.is_active = 0
+            attachment.change_date = текущая дата и время
+            attachment.attach_change_date = 
+  - case_id: 589a6bf2-bdef-4b2f-82f0-fe974b48f8fc
+    title: Проверка сохранения истории в БД при закрытии прикрепления для события FerzlAttachmentClosedResultEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить событие событие FerzlAttachmentClosedResultEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система сохраняет историю изменения прикрепления в таблицу attach.attachment_history
+            id = Авто
+            attachment_id = attachment.id закрытого прикрепления
+            change_source = metadata/systemCode
+            change_by_user = Пусто
+            change_event =  eventName из события, поступившего во входных параметрах 
+            change_event_date = current_timestamp 
+            ref_mo_mgfoms_core_mo_code_f032 = attach.attachment.ref_mo_mgfoms_core_code_f032_mo, где attach.attachment.id = attachment_id
+            ref_f002_smo_code = attach.person_info.ref_f002_smo_code, где attach.person_info.attachment_id = attachment_id
+            attachment_body = json, где attach.person_info.attachment_id = attachment_id
+            
+  - case_id: a8c4e0d4-8bbf-4fba-aab0-3d8b40bef5c0
+    title: Проверка формирования сообщение для публикации события FerzlAttachmentClosedResultEvent о закрытии прикрепления 
+    priority: medium
+    steps:
+      - action: Отправить событие FerzlAttachmentClosedResultEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система возвращает сформированное сообщение. При формировании сообщения указывается:
+            eventName ="AttachmentClosedEvent"
+            operationType = CLOSED 
+            attachId = attachment.id  закрытого прикрепления
+  - case_id: 405bcabd-51c6-4afe-b406-ac027ed8e516
+    title: Проверка сохранения в таблицу attach_event_topic_send сведений о закрытии для события FerzlAttachmentClosedResultEvent
+    priority: medium
+    steps:
+      - action: Отправить событие  FerzlAttachmentClosedResultEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система сохраняет в таблицу srv.attach_event_topic_send сведения для отправки:
+          messageId 
+  
+  - case_id: 7b45afa4-5a88-4b07-bde6-924c25a98bc1
+    title: Проверка закрытия прикрепления в БД для события  AttachmentInsideClosеEvent
+    description: Описание
+    priority: medium
+    steps:
+      - action: Отправить событие событие  AttachmentInsideClosеEvent для закрытия актуального прикрепления в БД
+        expected_result: |-
+          В БД в таблице attach.attachment изменены атрибуты:
+            attachment.id = {0}
+            attachment.date_end = data/attachment/dateAttachEnd
+            attachment.ref_attach_status_code_attach = A_CLOSED
+            attachment.ref_attach_status_ferzl_code = data/attachmentResult/ferzlResponseAttach/attachStatus
+            attachment.ferzl_transferred = 2
+            attachment.is_active = 0
+            attachment.change_date = текущая дата и время
+            attachment.attach_change_date =
+  
+  - case_id: 6548a472-51ff-4f52-b15a-8d6ca376da64
+    title: Проверка сохранения истории в БД при закрытии прикрепления для события AttachmentInsideClosеEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить событие событие AttachmentInsideClosеEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система сохраняет историю изменения прикрепления в таблицу attach.attachment_history
+            id = Авто
+            attachment_id = attachment.id закрытого прикрепления
+            change_source = metadata/systemCode
+            change_by_user = Пусто
+            change_event =  eventName из события, поступившего во входных параметрах 
+            change_event_date = current_timestamp 
+            ref_mo_mgfoms_core_mo_code_f032 = attach.attachment.ref_mo_mgfoms_core_code_f032_mo, где attach.attachment.id = attachment_id
+            ref_f002_smo_code = attach.person_info.ref_f002_smo_code, где attach.person_info.attachment_id = attachment_id
+            attachment_body = json, где attach.person_info.attachment_id = attachment_id
+  
+  - case_id: 65ec0ed0-2c08-4d16-8f58-db3ac14e5f97
+    title: Проверка формирования сообщение для публикации события AttachmentInsideClosеEvent о закрытии прикрепления 
+    priority: medium
+    steps:
+      - action: Отправить событие AttachmentInsideClosеEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система возвращает сформированное сообщение. При формировании сообщения указывается:
+            eventName ="AttachmentClosedEvent"
+            operationType = CLOSED 
+            attachId = attachment.id  закрытого прикрепления
+  
+  - case_id: 5acc7208-5010-430d-95ae-5f8e8377e7e7
+    title: Проверка сохранения в таблицу attach_event_topic_send сведений о закрытии для события AttachmentInsideClosеEvent
+    priority: medium
+    steps:
+      - action: Отправить событие  AttachmentInsideClosеEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система сохраняет в таблицу srv.attach_event_topic_send сведения для отправки:
+          messageId 
+  - case_id: b2c3d4e5-6f7a-4b5c-9d0e-1f2a3b4c5d6e
+    title: Проверка обрезания полей descr, dsource, dsourceType до 255 символов при сохранении в БД
+    description: При получении события FerzlAttachmentClosedResultEvent значения полей descr, dsource, dsourceType, превышающие длину поля в БД (255 символов), должны обрезаться до 255 символов при обновлении записи в таблице attachment.
+    priority: medium
+    steps:
+      - action: Отправить событие FerzlAttachmentClosedResultEvent для закрытия прикрепления, в котором поля descr, dsource, dsourceType содержат значения длиной более 255 символов
+        expected_result: |-
+          Система выполняет обновление сведений прикрепления в таблице attach.attachment.
+          Значения полей descr, dsource, dsourceType обрезаются до 255 символов и сохраняются в БД (длина поля в БД — 255 символов).

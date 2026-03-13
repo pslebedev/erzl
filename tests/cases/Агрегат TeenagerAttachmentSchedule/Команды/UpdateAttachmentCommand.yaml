@@ -1,0 +1,58 @@
+suite_id: 5e426c58-060a-4691-9063-3e1f516e214d
+suite_name: UpdateAttachmentCommand
+description: Описание
+created_at: '2026-01-12T07:23:07Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 51d28c2b-2dd3-4dff-a521-01bec1aa7e5a
+    title: 1. Проверка получения ошибки , если прикрепление не найдено в БД
+    description: Описание
+    priority: high
+    steps:
+      - action: Прикрепление для обновления не найдено в БД
+        expected_result: Команда возвращает ошибку AT_UPAC_001 "AT_UPAC_001 - Прикрепление с идентификатором {0} не найдено."
+
+  - case_id: 8df7759d-3fb5-430d-82a7-f0da5a85b43c
+    title: 2. Проверка обновления сведений о прикреплении
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 697d74e6-3f22-4405-a94b-cc842e803ca4
+    title: 3. Проверка сохранения истории изменения прикрепления
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: d6c42367-bfed-4a47-b255-a8942bcde83e
+    title: "4. Проверка формирования события\_AttachmentUpdatedEvent для топика\_AttachmentEventTopic"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 0b05a280-974a-4bc8-9191-56666422b6f1
+    title: 5. Проверка, что команда возвращает результат
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: |-
+          Если команда выполнена успешно(прикрепление обновлено), то возвращается:
+
+          ИД прикрепления
+          ИД сообщения (messageId) из сформированного сообщения для публикации события AttachmentUpdatedEvent - Обновлен тип участка с детского на взрослый (1.0.1)
+
+  - case_id: c040ea3d-5696-44db-99fa-19ca178f4422
+    title: 5. Проверка, что команда возвращает ошибку в случае ошибки
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

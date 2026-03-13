@@ -1,0 +1,203 @@
+suite_id: 24343553-47db-4bc4-9e99-5385ba91f2f3
+suite_name: Создание прикрепления в АИС ОМС. Позитивные.
+description: Команда служит для создания прикрепления в ОМС.ЕРЗЛ.Прикрепления и инициации отправки сведений о прикреплении для передачи ФЕРЗЛ (передача в ФЕРЗЛ выполняется на стороне ОМС.ЕРЗЛ.Интеграция с ФЕРЗЛ)
+created_at: '2025-10-17T10:54:16.443Z'
+status: new
+created_by: Лебедев Павел
+test_cases:
+  - case_id: 8c5ca884-289e-4e97-81d8-0441b5c4bf8a
+    title: Cоздание нового прикрепления, добавление записи в ATTACH.ATTACHMENT
+    description: ''
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: Система создаёт запись в ATTACH.ATTACHMENT
+  - case_id: e4954270-7a55-48c3-949b-cee635915495
+    title: "Cоздание нового прикрепления, добавление\_сведений о прикреплении из внешних систем\_в таблицу ATTACH.ATTACHMENT_EXT"
+    description: Проверка корректного добавления  сведений о МО в таблицу ATTACH.ATTACHMENT_EXT
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: Система создаёт запись в ATTACH.ATTACHMENT_EXT
+  - case_id: ae4bba02-921f-4abb-b013-9b42e6cc52fb
+    title: Cоздание нового прикрепления, проверка добавления  сведений о персоне в таблицу ATTACH.PERSON_INFO
+    description: Проверка корректного добавления  сведений о персоне в таблицу ATTACH.PERSON_INFO
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |
+          Система создаёт запись в ATTACH.PERSON_INFO — приведен полный маппинг полей таблицы на топик, но сохраняются только переданные в сообщении атрибуты;
+          ATTACHMENT_ID: ATTACH.ATTACHMENT.ID                        # связь с основной записью прикрепления
+          INSURED_PERSON_ID: data/attachment/insuredPersonId
+          PERSON_ID: data/attachment/personId
+          UKL: data/attachment/ukl
+          DUDL_OMS_ID: data/attachment/dudlInfo/dudlId
+          DUDL_EXT_ID: data/attachment/dudlInfo/dudlExtId
+          SURNAME: data/attachment/personInfo/surname
+          NAME: data/attachment/personInfo/firstName
+          PATRONYMIC: data/attachment/personInfo/patronymic
+          REF_KODPOL_GENDER_CODE: data/attachment/personInfo/gender
+          BIRTH_DATE: data/attachment/personInfo/dateBirth
+          POLICY_OMS_ID: data/attachment/policyInfo/policyId
+          POLICY_EXT_ID: data/attachment/policyInfo/policyExtId
+          REF_OMS_POLICY_TYPES_CODE: data/attachment/policyInfo/policyType
+          ENP: data/attachment/policyInfo/policyEnp
+          POLICY_SERIES: data/attachment/policyInfo/policySeries
+          POLICY_NUMBER: data/attachment/policyInfo/policyNumber
+          REF_F002_SMO_CODE: data/attachment/policyInfo/policySmoCode
+          REF_F010_OKATO5: data/attachment/policyInfo/policyOkato
+          SMO_EXT_ID: data/attachment/policyInfo/policySmoExtId
+          SMO_CODE_EXT: data/attachment/policyInfo/policySmoCodeExt
+          SMO_NAME_EXT: data/attachment/policyInfo/policySmoNameExt
+          REGISTER_ADDRESS_OMS_ID: data/attachment/registryAddressInfo/addressId
+          REGISTER_ADDRESS_TEXT: data/attachment/registryAddressInfo/addressText
+          REGISTER_ADDRESS_EXT_ID: data/attachment/registryAddressInfo/addressExtId
+          REGISTER_ADDRESS_TEXT_EXT: data/attachment/registryAddressInfo/addressTextExt
+          STAY_ADDRESS_OMS_ID: data/attachment/stayAddressInfo/addressId
+          STAY_ADDRESS_TEXT: data/attachment/stayAddressInfo/addressText
+          STAY_ADDRESS_EXT_ID: data/attachment/stayAddressInfo/addressExtId
+          STAY_ADDRESS_TEXT_EXT: data/attachment/stayAddressInfo/addressTextExt
+          CREATE_DATE: SYSDATE
+          CHANGE_DATE: SYSDATE
+  - case_id: 4a84876a-81c0-435d-aded-19389ceb73fb
+    title: Проверка корректного сохранения в таблицу SRV.ATTACH_EVENT_TOPIC_SEND сведения для отправки
+    description: ''
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |
+          Система сохраняет в таблицу SRV.ATTACH_EVENT_TOPIC_SEND сведения для отправки:
+          INSURED_PERSON_ID = data/attachment/insuredPersonId из сформированного сообщения
+          ATTACHMENT_ID = data/attachment/attachId из сформированного сообщения
+          CLOSING_ATTACHMENT_ID = ATTACHMENT.ID закрытого прикрепления, если на шаге 3 было закрыто старое прикрепление
+          OPERATION_TYPE = operationType из сформированного сообщения
+          MESSAGE_ID = messageId из сформированного сообщения
+          MESSAGE_TEXT = сформированное сообщение
+          STATUS = 0
+          SEND_DATE = SYSDATE;
+          CREATE_DATE = SYSDATE;
+          CHANGE_DATE = SYSDATE
+          Поле CLOSING_ATTACHMENT_ID добавлен для того, чтобы впоследствии можно было определить какое прикрепление было закрыто при создании нового 
+  - case_id: c94c9653-83d9-4355-9283-5d2aa1f37da9
+    title: Проверка сохранения истории изменения прикрепления в таблицу ATTACH.ATTACHMENT_HISTORY
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В ATTACH.ATTACHMENT существует активное (IS_ACTIVE=1) прикрепление для этого же ЗЛ (INSURED_PERSON_ID) и того же профиля (REF_RATYPE_PROFILE_CODE), но с другим ATTACH_EXT_ID. processClosingEvent.notIncludeAttachType = 0 (тип прикрепления учитывается).
+    steps:
+      - action: Отправить сообщение  в топик входных событий сервиса прикреплений
+        expected_result: В ATTACH.ATTACHMENT_HISTORY добавлена запись с ATTACHMENT_BODY — JSON, содержащим snapshot таблиц (ATTACHMENT, MO_INFO_ATTACH, PERSON_INFO) для нового прикрепления.
+  - case_id: 2ccbb8e2-e9a0-4d91-856c-ab7c4df6157c
+    title: Проверка сохранения сведений о прикреплении на момент утверждения заявления
+    description: ''
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: 'Система сохраняет сведения о прикреплении на момент его утверждения в таблицу ATTACH.ATTACHMENT_REQUEST '
+  - case_id: 3523346d-c726-4ff6-9acb-3843ecd248d4
+    title: Проверка поиска другого действующего прикрепления ЗЛ к тому же профилю
+    description: 'Сценарий: найдено другое действующее прикрепление для того же ЗЛ и профиля → сначала закрывается старое, затем создаётся новое. Параметр processClosingEvent.notIncludeAttachType = 0'
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В ATTACH.ATTACHMENT существует активное (IS_ACTIVE=1) прикрепление для этого же ЗЛ (INSURED_PERSON_ID) и того же профиля (REF_RATYPE_PROFILE_CODE), но с другим ATTACH_EXT_ID. processClosingEvent.notIncludeAttachType = 0 (тип прикрепления учитывается).
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: 'Система формирует событие о необходимости закрытия прикрепления ProcessClosingEvent с параметрами: eventName = ProcessClosingEvent data/attachOmsId = ATTACH.ATTACHMENT.ID прикрепления, найденного на предыдущем шаге data/attachCloseCode = значение системного параметра processClosingEvent.attachCloseCode data/dateAttachEnd = data/attachment/dateAttachBegin из входных параметров Прикрепление успешно закрыто: команда вернула ИД сформированного сообщения.'
+  - case_id: 8b7f28d9-d1d3-4933-8f55-0d6dfd6c5459
+    title: Проверка поиска другого действующего прикрепления ЗЛ к тому же профилю (Настройка processClosingEvent.notIncludeAttachType = 1)
+    description: 'Сценарий: найдено другое действующее прикрепление для того же ЗЛ и профиля → сначала закрывается старое, затем создаётся новое. Параметр processClosingEvent.notIncludeAttachType = 1'
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть активное прикрепление ЗЛ с тем же профилем, но другим типом (REF_ATTACH_TYPE_CODE != attachType). В параметрах системы установлено processClosingEvent.notIncludeAttachType = 1.
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: 'Система формирует событие о необходимости закрытия прикрепления ProcessClosingEvent с параметрами: eventName = ProcessClosingEvent data/attachOmsId = ATTACH.ATTACHMENT.ID прикрепления, найденного на предыдущем шаге data/attachCloseCode = значение системного параметра processClosingEvent.attachCloseCode data/dateAttachEnd = data/attachment/dateAttachBegin из входных параметров Прикрепление успешно закрыто: команда вернула ИД сформированного сообщения.'
+    post-conditions: []
+    tags: []
+  - case_id: db41dd39-bdd9-4f3a-ae7c-db1e24430348
+    title: Проверка поиска другого действующего прикрепления ЗЛ к другому профилю  (Настройка processClosingEvent.notIncludeAttachType = 0)
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |-
+          ???
+          Новое прикрепление создано.
+          Старое остаётся IS_ACTIVE = 1, без изменений.
+          В SRV.ATTACH_EVENT_TOPIC_SEND — запись для AttachmentCreatingEvent.
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть активное прикрепление ЗЛ с тем же профилем, но другим типом (REF_ATTACH_TYPE_CODE != attachType). В параметрах системы установлено processClosingEvent.notIncludeAttachType = 0
+    description: при отсутствии совпадения по профилю (areaType) — ни одно старое прикрепление не должно быть закрыто, даже если есть активные прикрепления у этого лица для других профилей.
+  - case_id: 4b514beb-e339-4a39-9406-89a1565bf3a2
+    title: "Проверка передачи параметров\_\_для формирования события AttachmentInsideClosingEvent при наличии действующего прикрепления"
+    description: ''
+    priority: medium
+    steps:
+      - action: Выполнить действие
+        expected_result: |-
+          Передаются параметры:
+          eventName = AttachmentInsideClosingEvent;
+          data/attachOmsId = attach.attachment.id прикрепления, найденного на предыдущем шаге;
+          data/attachClose = значение системного параметра attachmentInsideClosingEvent.attachCloseCode (системный параметр "Причина закрытия имеющегося прикрепления при создании нового прикрепления к другой МО");
+          data/dateAttachEnd = data/attachment/dateAttachBegin из входных параметров"
+    pre-conditions:
+      - action: У пользователя есть действующих прикреплений к тому же профилю
+        expected_result: ''
+  - case_id: a3806163-e3dd-4915-b8ad-d88fade91239
+    title: "Проверка передачи параметров для формирования сообщения  AttachmentCreatingEvent для топика\_AttachmentEventTopic\_при отсутствии действующего прикрепления"
+    description: ''
+    priority: medium
+    steps:
+      - action: Выполнить действие
+        expected_result: |-
+          В алгоритм ередаются параметры:
+
+          eventName = AttachmentCreatingEvent
+          operationType = CREATING
+          attachId = ИД прикрепления (attachment.id созданное)
+    pre-conditions:
+      - action: У пользователя отсутствует действующие прикрепление к тому же профилю
+        expected_result: ''
+  - case_id: 5caf2773-ee51-4e78-a430-c6ca3e70db14
+    title: "Проверка передачи параметров для формирования сообщения  AttachmentCreatingEvent для топика\_AttachmentEventTopic\_при наличии действующего прикрепления"
+    description: ''
+    priority: medium
+    steps:
+      - action: Выполнить действие
+        expected_result: |-
+          В алгоритм ередаются параметры:
+
+          eventName = AttachmentCreatingEvent
+          operationType = CREATING
+          attachId = ИД прикрепления (attachment.id созданное)
+          closingAttachmentId = attachment.id закрытого прикрепления
+  - case_id: c4222771-e727-4bba-b8e5-f5d565feb3f0
+    title: Проверка возвращения результата выполнения команды при отсутствии действующего прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |-
+          Система возвращает:
+          ИД созданного прикрепления
+          ИД сообщения (messageId) из сформированного сообщения о создании
+    pre-conditions:
+      - action: У пользователя нет действующих прикреплений к тому же профилю
+        expected_result: ''
+  - case_id: 50ea433b-e22b-4004-bc95-87e78e97538c
+    title: Проверка возвращения результата выполнения команды при наличии действующего прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |-
+          Система возвращает:
+          ИД закрытого прикрепления
+          ИД сообщения (messageId) из сформированного сообщения о закрытии
+          ИД созданного прикрепления
+          ИД сообщения (messageId) из сформированного сообщения о создании
+    pre-conditions:
+      - action: У пользователя есть действующих прикреплений к тому же профилю
+        expected_result: ''

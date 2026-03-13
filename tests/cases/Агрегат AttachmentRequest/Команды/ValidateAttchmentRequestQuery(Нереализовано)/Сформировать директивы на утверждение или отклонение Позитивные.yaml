@@ -1,0 +1,384 @@
+suite_id: 812d4451-5076-48d1-b0a9-5c9a6119252d
+suite_name: Сформировать директивы на утверждение или отклонение Позитивные
+description: Описание
+created_at: '2026-02-11T11:28:41Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 218fabe9-014a-4212-a83d-48e39481673d
+    title: "1. Проверка поиска прикрепления по\_attachmentId"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с валидным attachmentId.
+        expected_result: Переход на шаг 2
+
+  - case_id: 0a472ad7-3b91-4b0b-9a56-01ae8b7a6c6b
+    title: 2. Проверка статуса заявления на найденного на шаге 1.
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с валидным attachmentId и статусом "Заявление создано" attach.attachment.ref_attach_status_code_request = arCreated
+        expected_result: Переход на шаг 3
+
+  - case_id: 0a15248d-0acb-4451-9619-042ff171c418
+    title: "3.\_Проверка прикрепления на срок действия"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с валидным attachmentId и статусом "Заявление создано" attach.attachment.ref_attach_status_code_request = arCreated, isActive = true
+        expected_result: Ожидаемый результат
+
+  - case_id: 78b8bbac-3489-4cca-b7f6-b17c7e8e8143
+    title: "3.1 Проверка причины подачи заявления attachOpen =\_ addressChange"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с ид прикреплением у которого
+           attach.attachment.ref_attach_open_code = addressChange
+        expected_result: Переход на шаг 4.
+
+  - case_id: 58cb3485-b7fe-4931-945b-3066588e34d6
+    title: "3.1 Проверка причины подачи заявление при attachOpen =\_hospitalChange"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с ид прикреплением у которого
+           attach.attachment.ref_attach_open_code = hospitalChange
+        expected_result: Переход на шаг 3.2
+
+  - case_id: b2f3ca37-9c94-4d96-9568-7d2d20420db3
+    title: "3.2 Проверка вызова алгоритма\_ GetPersonSimilarAttachments для получения открытого прикрепления для данного ЗЛ того же профиля"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с ид прикреплением у которого
+           attach.attachment.ref_attach_open_code = addressChange.
+
+          Входные данные для алгоритма:
+          - insuredPersonId (ИД ЗЛ в АИС ОМС) = insuredPersonId заявлении, найденного на шаге1.
+          - isActive = true
+          - profileCode - Профиль прикрепления = profileCode текущего заявления
+          - attachTypeCode - Тип прикрепления = byHeads (подушевое прикрепление)
+        expected_result: Переход на шаг 3.3
+
+  - case_id: a4f4c226-2975-4aad-8301-5e779493ac4f
+    title: "3.2.1 Проверка вызова алгоритма\_GetPersonSimilarAttachments при ненайденном прикреплении профиля"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с ид прикреплением у которого
+           attach.attachment.ref_attach_open_code = addressChange.
+
+          Входные данные для алгоритма:
+          - insuredPersonId (ИД ЗЛ в АИС ОМС) = insuredPersonId заявлении, найденного на шаге1.
+          - isActive = true
+          - profileCode - Профиль прикрепления = profileCode текущего заявления
+          - attachTypeCode - Тип прикрепления = byHeads (подушевое прикрепление)
+        expected_result: Прикрепление не найдено переход на шаг 4.
+
+  - case_id: 6ca7a00d-7551-47c8-9b3b-01ba500e509e
+    title: 3.3 Проверка начала действия прикрепления для смены прикрепления
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с валидным attachmentId из предусловия, а так же  attach.attachment.ref_attach_open_code = hospitalChangee
+        expected_result: |-
+          Дата начала прикрепления (dateBegin) для любого элемента списка типа PersonSimilarAttachmentsData < Текущая дата минус значение системного параметра attachmentRequestValidation.minChangePeriod  (Минимальный период, после которого можно сменить прикрепление с причиной не равной "Смена места жительства", в календарных днях).
+          Условие выполнено - переход на шаг 4.
+    pre-conditions:
+      - action: |-
+          Системный параметр attachmentRequestValidation.minChangePeriod установлен в значение 365
+
+          На шаге 3.2 передано прикрепление с dateBegin = 13.02.2026
+
+          Текущая дата 14.02.2026
+        expected_result: Результат предусловия
+
+  - case_id: a07d46bc-388e-47ba-9aa4-83150b170c01
+    title: "3.3.1\_: Проверка отклонения заявки на смену прикрепления при невалидных параметрах"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery
+          с валидным attachmentId из предусловия при этом <value>
+        expected_result: |
+          Предоставлена директива "отклонить/запрещено одобрять" с обоснованием "Есть открытое прикрепление со сроком меньше года"
+
+          Установлено значения выходных параметров
+
+          approveDirectiveResult = false
+          rejectDirectiveResult = true,
+          explanations = 'Есть открытое прикрепление со сроком меньше года'
+          Переход на шаг 7:
+          Система возвращает ответ с кодом 200  и тело ответа.
+
+          Алгоритм завершен
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: 'data_begin >Текущая дата минус значение системного параметра attachmentRequestValidation.minChangePeriod '
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: 'data_begin >Текущая дата минус значение системного параметра attachmentRequestValidation.minChangePeriod '
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: attach.attachment.ref_attach_open_code = addressChange
+
+  - case_id: 567fb22b-f1b6-43ea-a816-bd67f991d206
+    title: "4. и 4.1 Проверка на возможность утверждения прикрепления из шага 3.3 и вызов алгоритма\_ GetPersonSimilarAttachmentRequests"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Шаг 3.3 успешно проверен.
+          Система Вызывает алгоритм  GetPersonSimilarAttachmentRequests - Алгоритм получения аналогичных заявлений на прикрепление передавая на вход:
+          attachmentId (ИД текущего заявления на прикрепление) = attachment.id (из входных параметров);
+          insuredPersonId (ИД ЗЛ в АИС ОМС) = insuredPersonId из заявления, найденного на шаге1;
+          attachReqStatus = arCreated
+          profileCode (Профиль прикрепления)= profileCode из заявления, найденного на шаге1;
+          attachTypeCode (Тип прикрепления) = byHeads (подушевое прикрепление)
+        expected_result: |
+          На выходе получаем список объектов прикрепления пользователя:
+          attachmentId - ИД заявления на прикрепление;
+          dateApplyReg - Дата подачи заявления;
+          attachOpen - Причина прикрепления по заявлению;
+          attachTypeCode - Тип прикрепления;
+          profileCode - Профиль прикрепления.
+
+          Заявления на прикрепления профиля не найдено, предоставлена директива "разрешить/одобрить". 
+          Устновлено на вход значения.
+          approveDirectiveResult = true
+          rejectDirectiveResult = false
+          explanations = null
+
+          Переход на шаг 7.
+          Система возвращает ответ с кодом 200  и тело ответа.
+          Алгоритм завершен
+
+  - case_id: 18aaf1d3-3388-477a-9b39-0b0bb7f8e690
+    title: "4.1.2 Переход на следующий шаг при найденном заявлении профиля при вызове алгоритма\_GetPersonSimilarAttachmentRequests"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Шаг 3.3 успешно проверен.
+          Система Вызывает алгоритм  GetPersonSimilarAttachmentRequests - Алгоритм получения аналогичных заявлений на прикрепление передавая на вход:
+          attachmentId (ИД текущего заявления на прикрепление) = attachment.id (из входных параметров);
+          insuredPersonId (ИД ЗЛ в АИС ОМС) = insuredPersonId из заявления, найденного на шаге1;
+          attachReqStatus = arCreated
+          profileCode (Профиль прикрепления)= profileCode из заявления, найденного на шаге1;
+          attachTypeCode (Тип прикрепления) = byHeads (подушевое прикрепление)
+        expected_result: Переход на шаг 4.2
+    pre-conditions:
+      - action: Существует профиль с заявлением на прикрепление ЗЛ
+        expected_result: Результат предусловия
+
+  - case_id: 345fb4a9-9461-4870-87c0-67df00c25160
+    title: "4.2 Проверка системой причину подачи текущего заявления при\_attachOpen =\_addressChange \"Смена места жительства\""
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery. С 
+          с ид прикреплением у которого attach.attachment.ref_attach_open_code = addressChange
+        expected_result: |-
+          Система проверяет причину подачи текущего заявления на прикрепление attach.attachment.ref_attach_open_code = addressChange.
+          Переход на шаг 5
+    pre-conditions:
+      - action: На шаге 4.1 Было найдено прикрепления у профиля
+        expected_result: Результат предусловия
+
+  - case_id: ad39ac03-4fbf-4708-b106-fe25e8318388
+    title: "4.2.1\_ Проверка системой причину подачи текущего заявления при attachOpen = hospitalChange"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery. С 
+          с ид прикреплением у которого attach.attachment.ref_attach_open_code = hospitalChange
+        expected_result: |-
+          Система проверяет причину подачи текущего заявления на прикрепление attach.attachment.ref_attach_open_code = addressChange.
+          Переход на шаг 6.
+    pre-conditions:
+      - action: На шаге 4.1 Было найдено прикрепления у профиля
+        expected_result: Результат предусловия
+
+  - case_id: e1c6c8fb-29f9-4edc-86df-57438f82d738
+    title: "5.\_\_Проверка возможности утверждения текущего заявления с причиной подачи заявления (attachOpen)"
+    description: Описание
+    priority: medium
+    steps:
+      - action: Шаг 4.2 успешно пройден
+        expected_result: |-
+          У прикрепления  attachOpen = addressChangeСмена места жительства"
+          Переход к шагу 5.1
+    pre-conditions:
+      - action: Шаг 4.2 успешно пройден
+        expected_result: Результат предусловия
+
+  - case_id: a64fb526-d5d1-458b-b4f6-0da5a3b53654
+    title: "5.1 Проверка найденных на 4 шаге заявлений на прикрепление с\_attachOpen =\_addressChange"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery. С 
+          с ид прикреплением у которого attach.attachment.ref_attach_open_code = addressChange
+          Шаг 5 пройден успешно. Условия поиска - attach.attachment.ref_attach_open_code = addressChange ("Смена места жительства");
+        expected_result: Заявления на прикрепление с причиной подачи заявления (attachOpen) равной "Смена места жительства" найдены. Переход на шаг 5.2
+
+  - case_id: 547998cb-c202-4f23-87bf-a1626a62abed
+    title: "5.1.1\_Проверка ненайденных на 4 шаге заявлений на прикрепление с attachOpen = addressChange"
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Изменить заявление на прикрепление с attach.attachment.ref_attach_open_code = addressChange на hospitalChange
+
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery. С 
+          с ид прикреплением у которого  был attach.attachment.ref_attach_open_code = addressChange
+          Шаг 5 пройден успешно. 
+          Условия поиска - attach.attachment.ref_attach_open_code = addressChange ("Смена места жительства");
+        expected_result: |-
+          Система не находит заявление. Предоставляет директиву "разрешить/одобрить":
+          Установливает значения выходных параметров:
+
+          approveDirectiveResult = true,
+          rejectDirectiveResult = false;
+          Переход на шаг 7.
+          ответ 200.
+    pre-conditions:
+      - action: Шаг 5 успешно пройден
+        expected_result: Результат предусловия
+
+  - case_id: f979f570-ecbf-4f94-91a0-fa810de98a45
+    title: 5.2 Проверка дат подачи (dateApplyReg) текущего и найденного заявления на прикрепление на шаге 5.1 заявления.
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery. 
+          На шаге 5.1 были найдены заявления на прикрепления с dateApplyReg < чем дата текущего заявления.
+          Условия проверки: <value>
+        expected_result: <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: dateApplyReg текущего заявления = максимальной dateApplyReg среди отобранных на шаге 5.1 заявлений
+          - name: result
+            value: Установить значения выходных параметров:approveDirectiveResult = true,rejectDirectiveResult = false,переход на шаг 7;
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: dateApplyReg текущего заявления > максимальной dateApplyReg среди отобранных на шаге 5.1 заявлений
+          - name: result
+            value: Установить значения выходных параметров:approveDirectiveResult = true,rejectDirectiveResult = false,переход на шаг 7;
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: dateApplyReg текущего заявления < максимальной dateApplyReg среди отобранных на шаге 5.1 заявлений
+          - name: result
+            value: Предоставлена директива Отклонить/запрещено одобрять. Установлено значения выходных параметров:approveDirectiveResult = false , rejectDirectiveResult = true, explanations = 'Есть более приоритетное заявления',  Переход на 7 шаг. code 200
+    pre-conditions:
+      - action: на шаге 5.1 были найдены заявления на прикрепления с dateApplyReg < чем дата текущего заявления.
+        expected_result: Результат предусловия
+
+  - case_id: 3cc4c4c1-3c0e-412a-ab03-39ae547b8e11
+    title: "6. и 6.1 Проверка возможности утверждения текущего заявления с причиной подачи заявления\_ attachOpen = hospitalChange"
+    description: Описание
+    priority: medium
+    steps:
+      - action: <value>
+        expected_result: <result>
+    pre-conditions:
+      - action: 'Шаг 4.2.1 Прошел успешно '
+        expected_result: Результат предусловия
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: 'Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого attachOpen = hospitalChange, На шаге 4.2.1 было найдено данное прикрепление. '
+          - name: result
+            value: По условиям поиска не было найдено заявления сattach.attachment.ref_attach_open_code = addressChange, переход на шаг 6.2
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: 'Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого attachOpen = addressChange  На шаге 4.2.1 было найдено данное прикрепление. '
+          - name: result
+            value: 'По условиям поиска было найдено заявления с attach.attachment.ref_attach_open_code = addressChange, предоставлена директива "отклонить/запрещено одобрять" с обоснованием "Есть более приоритетное заявление". Установить значения выходных параметров:  approveDirectiveResult = false rejectDirectiveResult = true explanations = ''Есть более приоритетное заявления'' переход на шаг 7.  код 200.'
+
+  - case_id: 3dcc1c70-3baf-4656-8002-276e94eb7ac5
+    title: 6.2 Проверка поиска других заявлений профиля с причиной подачи не равной "Смена места жительства"
+    description: ''
+    priority: medium
+    steps:
+      - action: <value>
+        expected_result: <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого attachOpen = address Chenge
+          - name: result
+            value: По условиям поиска  attach.attachment.ref_attach_open_code <> addressChange, было найдено заявление на прикрепление с attachOpen = addressChange, переход на шаг 6.3
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого attachOpen = hospitalChange
+          - name: result
+            value: По условиям поиска  attach.attachment.ref_attach_open_code <> addressChange, не было найдено заявление на прикрепление с attachOpen = addressChange. Предоставлена директива  "разрешить/одобрить". Установлено значение выходных параметров  approveDirectiveResult = true rejectDirectiveResult = false explanations = null переход на шаг 7
+    pre-conditions:
+      - action: ''
+        expected_result: Результат предусловия
+
+  - case_id: 42210b84-3e18-48ff-8af0-cdb5191c753b
+    title: 6.3 Проверка сверки дат заявлений найденных на шаге 6.2.
+    description: Описание
+    priority: medium
+    steps:
+      - action: <value>
+        expected_result: <result>
+    pre-conditions:
+      - action: на шаге 6.2 было найдено заявление на прикрепление у профиля attach.attachment.ref_attach_open_code <> addressChange (не равное addressChange)
+        expected_result: Результат предусловия
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого dateApplyReg < dataApplyReg текущего значения
+          - name: result
+            value: 'По условия поиска "Если dateApplyReg текущего заявления > максимальной dateApplyReg среди отобранных заявлений на шаге 6.2", то ей предоставлена директива  "отклонить/запрещено одобрять" с обоснованием "Есть более приоритетное заявление": Установлены значения параметров:approveDirectiveResult = falserejectDirectiveResult = trueexplanations = ''Есть более приоритетное заявления''переход на шаг 7. Код 200'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого dateApplyReg < dataApplyReg текущего значения
+          - name: result
+            value: 'Предоставвлена директива  "разрешить/одобрить":  Установлены значения выходных параметров:  approveDirectiveResult = true rejectDirectiveResult = false explanations = null переход на шаг 7.'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: Передан метод POST /api/v1/AttachmentRequest/ValidateAttachmentRequestQuery с attachmentid заявления у которого dateApplyReg = dataApplyReg текущего значения
+          - name: result
+            value: 'Предоставвлена директива  "разрешить/одобрить":  Установлены значения выходных параметров:  approveDirectiveResult = true rejectDirectiveResult = false explanations = null переход на шаг 7.'

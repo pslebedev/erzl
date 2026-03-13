@@ -1,0 +1,53 @@
+suite_id: dff9a7eb-cbcc-498c-a07e-fe64e6fd133e
+suite_name: Позитивные
+description: ''
+created_at: '2025-10-17T13:20:24.833Z'
+status: new
+created_by: ''
+test_cases:
+  - case_id: 5b461c10-f7ae-4e6f-a7af-c316f0e7df3a
+    title: Проверка закрытия прикрепления в БД
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          В БД в таблице attach.attachment изменены атрибуты:
+            attachment.date_end = data/attachment/dateAttachEnd
+            attachment.ref_attach_status_code = A_CLOSING
+            attachment.is_active = 0
+            attachment.ref_attach_close_code = data/attachment/attachClose
+            attachment.change_date = текущая дата и время
+  - case_id: bff883e8-f0d2-4145-b894-421fed39250e
+    title: Проверка сохранения истории в БД при закрытии прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система сохраняет историю изменения прикрепления в таблицу attach.attachment_history
+            id = Авто
+            attachment_id = attachment.id закрытого прикрепления
+            change_source = ERZL2
+            change_by_user = Пусто
+            change_event = ExternalAttachmentClosedEvent
+            change_event_date = current_timestamp
+            ref_mo_mgfoms_core_mo_code_f032 = attach.mo_info_attach.ref_mo_mgfoms_core_code_f032_mo, где attach.mo_info_attach.attachment_id = attachment.id
+            ref_f002_smo_code = attach.person_info.ref_f002_smo_code, где attach.person_info.attachment_id = attachment.id
+            attachment_body
+  - case_id: 57b66b9b-44e1-48ca-9cf9-9ebbe77fc722
+    title: Проверка формирования сообщение для публикации события о закрытии прикрепления в топик AttachmentEventTopic
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent для закрытия актуального прикрепления в БД
+        expected_result: |
+          Система возвращает сформированное сообщение. При формировании сообщения указывается:
+            eventName ="AttachmentClosingEvent"
+            operationType = CLOSING 
+            attachId = attachment.id  закрытого прикрепления
+  - case_id: 34786a30-cf1c-4990-90dc-5d3ea975c2da
+    title: Проверка сохранения в таблицу srv.attach_event_topic_send сведений о закрытии для отправки в топик AttachmentEventTopic
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent для закрытия актуального прикрепления в БД
+        expected_result: Система сохраняет в таблицу srv.attach_event_topic_send сведения для отправки

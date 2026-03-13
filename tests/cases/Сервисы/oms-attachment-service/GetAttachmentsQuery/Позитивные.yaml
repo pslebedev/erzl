@@ -1,0 +1,145 @@
+suite_id: 4980b83f-6842-46a7-a4f5-1114ec8ee209
+suite_name: GetAttachmentsQuery_Позитивные
+description: Описание
+created_at: '2025-11-26T08:27:12Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 8f917f70-74e3-40e9-8473-f9b7eeca7c5a
+    title: Проверка получения списка прикреплений с обязательными параметрами
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: У ЗЛ есть прикрепления со статусами 'A_CREATING', 'A_CREATED', 'A_CLOSING', 'A_CLOSED', 'A_CANCELING'
+        expected_result: Результат предусловия
+    steps:
+      - action: |
+          "Вызвать метод GetAttachmentsQuery с параметрами:
+          - insuredPersonId: валидный ID застрахованного лица
+          - pageSize: значение в диапазоне от 1 до restQuery.maxPageSize
+          - page: значение >= 0"
+        expected_result: |
+          "Метод возвращает ответ с кодом 200
+          Тело ответа содержит список прикреплений
+          Прикрепления отсортированы по:
+            1. Код профиля прикрепления (по возрастанию)
+            2. Признак активности (сначала true)
+            3. Дата начала прикрепления (по убыванию)
+            4. Внутренний идентификатор (по убыванию)"
+  - case_id: 1ed46aef-7f02-48f3-aa67-662e2a71b835
+    title: Проверка получения списка прикреплений с параметром isActive = true
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: В системе существуют активные и неактивные прикрепления для указанного insuredPersonId
+        expected_result: Результат предусловия
+    steps:
+      - action: |
+          "Вызвать метод GetAttachmentsQuery с параметрами:
+          - insuredPersonId: валидный ID застрахованного лица
+          - isActive: true
+          - pageSize: валидное значение
+          - page: валидное значение"
+        expected_result: |
+          "Метод возвращает ответ с кодом 200.
+          В ответе содержатся только активные прикрепления (is_active = true).
+          Прикрепления соответствуют условиям поиска."
+  - case_id: bac183a5-8032-40c2-a943-272b3d798bc1
+    title: Проверка получения списка прикреплений с параметром isActive = false
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: В системе существуют активные и неактивные прикрепления для указанного insuredPersonId
+        expected_result: Результат предусловия
+    steps:
+      - action: |
+          "Вызвать метод GetAttachmentsQuery с параметрами:
+          - insuredPersonId: валидный ID застрахованного лица
+          - isActive: false
+          - pageSize: валидное значение
+          - page: валидное значение"
+        expected_result: |
+          "Метод возвращает ответ с кодом 200.
+          В ответе содержатся только неактивные  прикрепления (is_active = false).
+          Прикрепления соответствуют условиям поиска."
+  - case_id: b9c2de61-7894-47a4-a3d0-f6b1fbd85dbf
+    title: Проверка получения списка прикреплений без параметра isActive
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: В системе существуют активные и неактивные прикрепления для указанного insuredPersonId
+        expected_result: Результат предусловия
+    steps:
+      - action: |
+          Вызвать метод GetAttachmentsQuery с параметрами:
+          - insuredPersonId: валидный ID застрахованного лица
+          - isActive: не передается
+          - pageSize: валидное значение
+          - page: валидное значение
+        expected_result: |
+          Метод возвращает ответ с кодом 200
+          В ответе содержатся как активные, так и неактивные прикрепления
+  - case_id: 0879d651-e475-467f-8c32-82b29f998ed9
+    title: Проверка получения списка прикреплений с пагинацией (первая страница)
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: В системе существует более pageSize прикреплений для указанного insuredPersonId
+        expected_result: Результат предусловия
+    steps:
+      - action: |+
+          Вызвать метод GetAttachmentsQuery с параметрами:
+             - insuredPersonId: валидный ID застрахованного лица
+             - pageSize: 10
+             - page: 0
+
+        expected_result: |+
+          - Метод возвращает ответ с кодом 200
+          - В ответе содержится не более 10 записей
+          - Прикрепления отсортированы согласно правилам сортировки
+
+  - case_id: 127bd959-3ac4-48b1-b027-8e57265455fc
+    title: Проверка получения списка прикреплений с пагинацией (вторая страница) (копия)
+    description: Описание
+    priority: high
+    pre-conditions:
+      - action: В системе существует более 20 прикреплений для указанного insuredPersonId
+        expected_result: Результат предусловия
+    steps:
+      - action: |-
+          Вызвать метод GetAttachmentsQuery с параметрами:
+             - insuredPersonId: валидный ID застрахованного лица
+             - pageSize: 10
+             - page: 1
+        expected_result: |-
+          - Метод возвращает ответ с кодом 200
+          - В ответе содержится следующая страница результатов
+          - Прикрепления отсортированы согласно правилам сортировки
+  - case_id: 6e78c776-a4b9-4856-abba-2967b4cadc80
+    title: Проверка возврата наименований справочных значений (restQuery.nameRefReturn = true)
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Вызвать метод GetAttachmentsQuery с валидными параметрами '
+        expected_result: |
+          - Метод возвращает ответ с кодом 200
+          - В ответе присутствуют наименования справочных значений
+    pre-conditions:
+      - action: |-
+          - Системный параметр restQuery.nameRefReturn установлен в 1
+          - В системе существуют прикрепления для указанного insuredPersonId
+        expected_result: ''
+  - case_id: d9acdfcc-e728-4d8d-895c-bdd084c48338
+    title: Проверка отсутствия наименований справочных значений (restQuery.nameRefReturn = false)
+    description: ''
+    priority: medium
+    steps:
+      - action: Вызвать метод GetAttachmentsQuery с валидными параметрамиВыполнить действие
+        expected_result: |
+          - Метод возвращает ответ с кодом 200
+          - В ответе отсутствуют наименования справочных значений
+    pre-conditions:
+      - action: |
+          - Системный параметр restQuery.nameRefReturn установлен в 0
+          - В системе существуют прикрепления для указанного insuredPersonId
+        expected_result: ''

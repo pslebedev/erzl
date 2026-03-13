@@ -1,0 +1,176 @@
+suite_id: 83e83208-6bff-4923-a295-95e6c1b38cff
+suite_name: GetAttachmentsQuery_Негативные
+description: Описание
+created_at: '2025-11-26T08:27:18Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: e9c7ccfa-c630-42f1-ae13-9b5771442b9f
+    title: AC.1 Проверка получения ошибки при некорректном заполнении входных параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие <value>
+        expected_result: Ожидаемый результат <error>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Передано пустое тело запроса
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Не передан обязательный параметр insuredPersonId
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: Передан пустой insuredPersonId
+          - name: error
+            value: Получена ошибка InvalidRequestParameters
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: Передан некорректный тип insuredPersonId
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: Передан некорректное значение isActive
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: Передан некорректный тип paging
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '7'
+        params:
+          - name: value
+            value: Передан некорректный тип параметра pageSize (строка вместо числа)
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+      - iteration_id: '8'
+        params:
+          - name: value
+            value: Передан некорректный тип параметра page (строка вместо числа)
+          - name: error
+            value: '- Метод возвращает ответ с кодом 400/ Код ошибки: InvalidRequestParameters /Тип исключения: ValidationException'
+  - case_id: 69b02e5c-4c26-4721-9142-6a3ab8a15c25
+    title: AC.2 Проверка получения ошибки при некорректном заполнении входных параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие <value>
+        expected_result: Ожидаемый результат <error>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: ''
+          - name: error
+            value: 'Метод возвращает ответ с кодом 400/Код ошибки: InvalidParameterPageSize/ Тип исключения: ValidationException'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: pageSize превышает максимальное значение (restQuery.maxPageSize)
+          - name: error
+            value: 'Метод возвращает ответ с кодом 400/ Код ошибки: InvalidParameterPageSize/ Тип исключения: ValidationException '
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: pageSize = -1 (отрицательное значение)
+          - name: error
+            value: 'Метод возвращает ответ с кодом 400/ Код ошибки: InvalidParameterPageSize/ Тип исключения: ValidationException '
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: page = -1 (ниже минимального значения)
+          - name: error
+            value: 'Метод возвращает ответ с кодом 400 / Код ошибки: InvalidParameterPage/ Тип исключение: ValidationException  '
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: Одновременная ошибка pageSize=0 и page=-1
+          - name: error
+            value: 'Метод возвращает ответ с кодом 400/ Коды ошибок: InvalidParameterPageSize и InvalidParameterPage/ Тип исключения: AggregatedBusinessException '
+  - case_id: 523c7299-c93f-4b2f-ae65-013894acdc91
+    title: АС.3. Проверка работы , когда прикрепление не найдено
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод GetAttachmentsQuery с параметрами:
+             - insuredPersonId: ID застрахованного лица без прикреплений
+             - pageSize: валидное значение
+             - page: валидное значение
+        expected_result: |
+          Метод возвращает ответ с кодом 200
+          - Тело ответа содержит пустой список прикреплений
+    pre-conditions:
+      - action: В системе отсутствуют прикрепления для указанного insuredPersonId
+        expected_result: ''
+  - case_id: 6259235d-b8b8-4266-b1c5-25fe59e34005
+    title: АС.3. Проверка работы , когда прикрепление не найдены с указанным isActive = true
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод GetAttachmentsQuery с параметрами:
+             - insuredPersonId: валидный ID
+             - isActive: true
+             - pageSize: валидное значение
+             - page: валидное значение
+        expected_result: |
+          Метод возвращает ответ с кодом 200
+          - Тело ответа содержит пустой список прикреплений
+    pre-conditions:
+      - action: В системе существуют только неактивные прикрепления для указанного insuredPersonId
+        expected_result: ''
+  - case_id: cde67fe5-d0a7-4f60-a2a2-dd3e963dc171
+    title: АС.3. Проверка работы , когда прикрепление не найдены с указанным isActive = false
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод GetAttachmentsQuery с параметрами:
+             - insuredPersonId: валидный ID
+             - isActive: false
+             - pageSize: валидное значение
+             - page: валидное значение
+        expected_result: |
+          - Метод возвращает ответ с кодом 200
+          - Тело ответа содержит пустой список прикреплений
+    pre-conditions:
+      - action: В системе существуют только активные прикрепления для указанного insuredPersonId
+        expected_result: ''
+  - case_id: 787e7475-6824-4128-9844-72e5edcdbba8
+    title: "АС.3. Проверка работы , когда прикрепление не\_найдены (статусы не входят в разрешенный список)"
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод GetAttachmentsQuery с валидными параметрами
+        expected_result: |
+          - Метод возвращает ответ с кодом 200
+          - Тело ответа содержит пустой список прикреплений
+    pre-conditions:
+      - action: 'В системе существуют прикрепления для указанного insuredPersonId, но их статусы не входят в список: ''A_CREATING'', ''A_CREATED'', ''A_CLOSING'', ''A_CLOSED'', ''A_CANCELING'''
+        expected_result: ''
+  - case_id: 925a94ad-a096-4e26-a45f-a0c483e7881e
+    title: "АС.4:\_ Проверка получения непредвиденной ошибка (ошибка подключения к БД)"
+    description: ''
+    priority: medium
+    steps:
+      - action: Вызвать метод GetAttachmentsQuery с валидными параметрами
+        expected_result: |
+          Метод возвращает ответ с кодом 500
+          Тип исключения: TechnicalException
+    pre-conditions:
+      - action: База данных недоступна
+        expected_result: ''

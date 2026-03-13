@@ -1,0 +1,95 @@
+suite_id: f80ff65c-8365-462d-83bf-e05cdfcb3378
+suite_name: Аннулирование прикрепления в АИС ОМС . Позитивные
+description: Команда служит для создания прикрепления в ОМС.ЕРЗЛ.Прикрепления и инициации отправки сведений о прикреплении для передачи ФЕРЗЛ
+created_at: 2025-10-17T13:22:37.246Z
+status: new
+created_by: Лебедев Павел
+test_cases:
+  - case_id: f43b418e-aeab-47af-aaa1-6edb6f7f42cc
+    title: "Аннулирование прикрепления в АИС ОМС"
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД иммется прикрепление attach.attachment.attach_ext_id 
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: |
+          date_end = актуальная
+          ref_attach_status_code = 'A_CANCELING'
+          is_active = 0
+          is_cancelled = 1
+          ref_attach_close_code = актуальный
+          change_date обновлено на текущую дату/время.
+
+  - case_id: baea0843-345f-4655-9ac2-92a8c3a03f89
+    title: Проверка создания записи об анулировании в таблице  attach.cancel_info
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД иммется прикрепление attach.attachment.attach_ext_id 
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: |
+          attachment_id: attach.attachment.id аннулированного прикрепления
+          cancel_act_date: data/attachment/cancelInfo/cancelActDate
+          cancel_act_num: data/attachment/cancelInfo/cancelActNum
+          ref_cancel_act_type_code: data/attachment/cancelInfo/cancelActType
+          cancel_exp_date: data/attachment/cancelInfo/cancelExpDate
+          cancel_exp_surname: data/attachment/cancelInfo/cancelExpSurname (если передано)
+          cancel_exp_name: data/attachment/cancelInfo/cancelExpName (если передано)
+          cancel_exp_patronymic: data/attachment/cancelInfo/cancelExpPatronymic (если передано)
+          cancel_exp_conclusion: data/attachment/cancelInfo/cancelExpConclusion (если передано)
+          cancel_fine_sum: data/attachment/cancelInfo/cancelExpFine (если передано)
+          cancel_exp_defect: data/attachment/cancelInfo/cancelExpDefect (если передано)
+          app_scan: data/attachment/cancelInfo/cancelAppScan (если передано)
+          app_scan_link: data/attachment/cancelInfo/cancelAppScan (если передано)
+          create_date: sysdate (timestamp without time zone) - текущие дата/время
+          change_date: sysdate (timestamp without time zone) - текущие дата/время
+
+          Система возвращает результат: attachment.id, messageId
+
+  - case_id: 5f179125-c9ad-4657-b7ac-6ca2ca98e07a
+    title: Проверка сохранения истории анулирования прикрепления в таблицу ATTACH.ATTACHMENT_HISTORY
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД иммется прикрепление attach.attachment.attach_ext_id 
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: |
+          • attachment_id = id
+          • change_source = 'ERZL2'
+          • change_event = 'ExternalAttachmentCancelledEvent'
+          • change_event_date = sysdate
+          • attachment_body = JSON (таблицы attachment, mo_info_attach, person_info, cancel_info)
+  
+  - case_id: a75a58d8-59ab-4bfb-8a61-fa9c9c082ac9
+    title: Проверка формирования и отправки сообщения AttachmentCancellingEvent для публикации в AttachmentEventTopic
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД иммется прикрепление attach.attachment.attach_ext_id 
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: |
+          • eventName = 'AttachmentCancellingEvent'
+          • operationType = 'CANCELLING'
+          • attachId = attachment.id
+
+  - case_id: 614c74f7-312b-4468-a4f8-01ca792955e9
+    title: Проверка создания записи в таблице attach.attach_event_topic_send после анулирования 
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД иммется прикрепление attach.attachment.attach_ext_id 
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: |
+          Создаётся запись в attach.attach_event_topic_send:
+          • insured_person_id = data/attachment/insuredPersonId
+          • attachment_id = data/attachment/attachId
+          • operation_type = 'CANCELLING'
+          • message_id = messageId
+          • message_text = сформированное сообщение
+          • status = 0
+          • send_date, create_date, change_date = sysdate

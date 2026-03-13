@@ -1,0 +1,339 @@
+suite_id: a4fc4817-1fea-42c9-b1e7-b0d83127609f
+suite_name: "Негативные"
+description: "Алгоритм получения и обработки сообщений из топика AttachmentExternalSyncCommandTopic. Негативные"
+created_at: "2025-10-17T14:33:48.416Z"
+status: new
+created_by: ""
+test_cases:
+
+  - case_id: 00a6b468-346f-4ecc-9719-7cc365c8d480
+    title: "АС.1 Проверка входных параметров полученного сообщения на соответствие требуемому формату сообщения"
+    description: "Проверка реализации возможности запуска функции по расписанию, установленному в таблице системных параметров"
+    priority: medium
+    steps:
+    - action: |
+        "Отправить сообщение В топик AttachmentExternalSyncCommandTopic, не соответствующее требуемому формату сообщение:
+        { 
+        123 
+        }
+        "
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_001 - Не удалось распарсить сообщение: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>."
+
+
+  - case_id: b59aa477-82eb-4dc0-8f6a-1f3f93b9fb66
+    title: "АС.1 Проверка полученного сообщения на соответствие json - схеме"
+    priority: medium
+    steps:
+    - action: |
+        "Отправить сообщение В топик AttachmentExternalEventTopic, не соответствующее json - схеме (например, типы данных):
+        {
+          Добавить пример?
+        } 
+        "
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_002 - ФЛК не пройден. Некорректный формат сообщения: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>." 
+
+  - case_id: 84c57f19-5395-4444-a0ee-04ab8cc3c82d
+    title: "АС.1 Проверка полученного сообщения на соответствие заполнения параметра operationType"
+    priority: medium
+    steps:
+    - action: |
+        "Отправить сообщение В топик AttachmentExternalEventTopic с operationType = TEST"
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку  
+        AT_IEAA_003 - ФЛК не пройден. Тип операции <operationType> не разрешен для обработки. ИД сообщения = <ИД сообщения (message_id)>" 
+
+  
+  - case_id: 4bcf4ae1-0c26-46fa-b9f6-04a4ba87fee0
+    title: "АС.1 Проверка полученного сообщения на соответствие длины переданных значений"
+    priority: medium
+    steps:
+    - action: ""
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_004 - ФЛК не пройден. Длина переданного значения <наименование атрибута сообщения> превышает размер соответствующего поля БД. ИД сообщения = <ИД сообщения (message_id)>." 
+
+
+  - case_id: 6221ada0-0046-4eda-b346-2f1263beb612
+    title: "АС.1 Проверка полученного сообщения из Kafka на заполнение обязательных параметров"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение <msg> в топик  attachmentExternalSyncCommandTopic в сообщении <param>"
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_005 - ФЛК не пройден. Передано некорректное сочетание полей. ИД сообщения = ИД сообщения (message_id)." 
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: msg
+        value: "ExternalAttachmentClosedEvent"
+      - name: param
+        value: "не передано data/attachment/dateAttachEnd"  
+    - iteration_id: '2'
+      params:
+      - name: msg
+        value: "ExternalAttachmentClosedEvent"
+      - name: param
+        value: "не передано data/attachment/attachClose"  
+    - iteration_id: '3'
+      params:
+      - name: msg
+        value: "не передано ExternalAttachmentClosedEvent"
+      - name: param
+        value: "data/attachment/isActual"
+    - iteration_id: '5'
+      params:
+      - name: msg
+        value: "ExternalAttachmentClosedEvent"
+      - name: param
+        value: "передано isActual = True"
+    - iteration_id: '6'
+      params:
+      - name: msg
+        value: "ExternalAttachmentCancelledEvent"
+      - name: param
+        value: "не передано data/attachment/cancelInfo"         
+    - iteration_id: '7'
+      params:
+      - name: msg
+        value: "ExternalAttachmentCancelledEvent"
+      - name: param
+        value: "не передано data/attachment/dateAttachEnd"         
+    - iteration_id: '8'
+      params:
+      - name: msg
+        value: "ExternalAttachmentCancelledEvent"
+      - name: param
+        value: "не передано data/attachment/attachClose"    
+    - iteration_id: '9'
+      params:
+      - name: msg
+        value: "ExternalAttachmentCancelledEvent"
+      - name: param
+        value: "не передано data/attachment/isActual"     
+    - iteration_id: '10'
+      params:
+      - name: msg
+        value: "ExternalAttachmentCancelledEvent"
+      - name: param
+        value: "передано isActual = True"
+    - iteration_id: '11'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "не передано data/attachment/personInfo"      
+    - iteration_id: '11'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "не передано data/attachment/policyInfo"         
+    - iteration_id: '12'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "не передано data/attachment/isActual"    
+    - iteration_id: '13'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "передано isActual = False"                              
+    - iteration_id: '14'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "передано data/attachment/dateAttachEnd"  
+    - iteration_id: '15'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "передано data/attachment/attachClose"  
+    - iteration_id: '16'
+      params:
+      - name: msg
+        value: "ExternalAttachmentApprovedEvent"
+      - name: param
+        value: "передано attachStatusExt != значению из сис.парам. attachmentExternalSyncCommandTopic.import.attachStatusExtForCreated"  
+            
+  - case_id: 6914e112-ff95-41ba-b0d7-2740a04db1cd
+    title: "АС.1 Проверка полученного сообщения при передаче registryAddressInfo"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение в топик AttachmentExternalEventTopic с заполненным registryAddressInfo  <param>"
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_005 - ФЛК не пройден. Передано некорректное сочетание полей. ИД сообщения = ИД сообщения (message_id)."          
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: param
+        value: " не переданы addressId, addressExtId" 
+    - iteration_id: '2'
+      params:
+      - name: param
+        value: "переданы addressId=None, addressExtId=None"    
+    - iteration_id: '3'
+      params:
+      - name: param
+        value: "передан addressId=None, не передан addressExtId" 
+    - iteration_id: '4'
+      params:
+      - name: param
+        value: "не передан addressId, передан addressExtId=None"            
+    - iteration_id: '5'
+      params:
+      - name: param
+        value: "передан addressId, не передан addressText"        
+    - iteration_id: '6'
+      params:
+      - name: param
+        value: "переданы addressId, addressText=''"    
+    - iteration_id: '7'
+      params:
+      - name: param
+        value: "передан addressExtId, не передан addressTextExt"    
+    - iteration_id: '8'
+      params:
+      - name: param
+        value: "переданы addressExtId, addressTextExt=''"    
+
+  - case_id: 023ffc81-e7b6-4588-81a2-c966ae723efe
+    title: "АС.1 Проверка полученного сообщения при передаче stayAddressInfo"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение в топик AttachmentExternalEventTopic с заполненным stayAddressInfo  <param>"
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_005 - ФЛК не пройден. Передано некорректное сочетание полей. ИД сообщения = ИД сообщения (message_id)."          
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: param
+        value: " не переданы addressId, addressExtId" 
+    - iteration_id: '2'
+      params:
+      - name: param
+        value: "переданы addressId=None, addressExtId=None"    
+    - iteration_id: '3'
+      params:
+      - name: param
+        value: "передан addressId=None, не передан addressExtId" 
+    - iteration_id: '4'
+      params:
+      - name: param
+        value: "не передан addressId, передан addressExtId=None"            
+    - iteration_id: '5'
+      params:
+      - name: param
+        value: "передан addressId, не передан addressText"        
+    - iteration_id: '6'
+      params:
+      - name: param
+        value: "переданы addressId, addressText=''"    
+    - iteration_id: '7'
+      params:
+      - name: param
+        value: "передан addressExtId, не передан addressTextExt"    
+    - iteration_id: '8'
+      params:
+      - name: param
+        value: "переданы addressExtId, addressTextExt=''"         
+      
+
+  - case_id: ad0c86b7-ffdf-447d-a854-67ede17972cf
+    title: "АС.1 Проверка полученного сообщения при передаче dudlInfo"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение в топик AttachmentExternalEventTopic с заполненным dudlInfo <param>"
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+        AT_IEAA_005 - ФЛК не пройден. Передано некорректное сочетание полей. ИД сообщения = ИД сообщения (message_id)."    
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: param
+        value: "не переданы dudlId, dudlExtId" 
+    - iteration_id: '2'
+      params:
+      - name: param
+        value: "переданы dudlId=None, dudlExtId=Nonе"
+    - iteration_id: '3'
+      params:
+      - name: param
+        value: "передан dudlId=None, не передан dudlExtId"     
+    - iteration_id: '4'
+      params:
+      - name: param
+        value: "не передан dudlId, передан dudlExtId=None"      
+    
+
+  - case_id: 2988f765-d8dd-4d0c-83bc-3adf98d9abe6
+    title: "АС.1 Проверка наличия в справочниках переданных в сообщении значений"
+    priority: medium
+    steps:
+    - action: "Переданное значение <value> отсутствует в справочнике <ref>."
+      expected_result: "Система сохраняет в таблицу SRV.ATTACH_EXTERNAL_TOPIC_RECEIVE ошибку 
+          AT_IEAA_006 - Переданное значение 'наименование атрибута' отсутствует в справочнике."  
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: value
+        value: "attachStatusExt"
+      - name: ref
+        value: "ref.attach_status.ref_attach_status_ext_id"
+    - iteration_id: '2'
+      params:
+      - name: value
+        value: "areaType"
+      - name: ref
+        value: "ref.ratype.type_id"    
+    - iteration_id: '3'
+      params:
+      - name: value
+        value: "data/attachment/attachType"
+      - name: ref
+        value: "ref.attach_type.code"  
+    - iteration_id: '4'
+      params:
+      - name: value
+        value: "data/attachment/attachMethodCode"
+      - name: ref
+        value: "ref.attach_method.code"  
+    - iteration_id: '5'
+      params:
+      - name: value
+        value: "data/attachment/attachOpen"
+      - name: ref
+        value: "ref.attach_open.code"  
+    - iteration_id: '6'
+      params:
+      - name: value
+        value: "data/attachment/capitation"
+      - name: ref
+        value: "ref.capitation.code"  
+    - iteration_id: '7'
+      params:
+      - name: value
+        value: "data/attachment/policyInfo/policyType"
+      - name: ref
+        value: "ref.oms_policy_types.code"    
+    - iteration_id: '8'
+      params:
+      - name: value
+        value: "data/attachment/personInfo/gender"
+      - name: ref
+        value: "ref.kodpol.code"        
+    - iteration_id: '9'
+      params:
+      - name: value
+        value: "data/attachment/attachClose"
+      - name: ref
+        value: "ref.attach_close.code"        
+
+  - case_id: 212518a2-5159-4a66-b80c-031d4c6140ce
+    title: "АС.2 Проверка действий в случае ошибки записи в БД"
+    priority: medium
+    steps:
+    - action: ""
+      expected_result: ""      
+               

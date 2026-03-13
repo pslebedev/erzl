@@ -1,0 +1,231 @@
+suite_id: 0713678f-e35c-47f4-80dd-8d9461eb07b4
+suite_name: Алгоритм отправки сообщений в топик AttachmentEventTopic
+description: ''
+created_at: '2025-11-13T12:07:31.673Z'
+status: new
+created_by: ''
+test_cases:
+  - case_id: e0f80220-7764-4086-9b50-5bee0b178ff8
+    title: 1. Проверка запуска планировщика
+    description: Проверка реализации возможности запуска функции по расписанию, установленному в таблице системных параметров
+    priority: medium
+    steps:
+      - action: Действие <msg>
+        expected_result: Ожидаемый результат <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: msg
+            value: 'Алогритм запускается впервые. Запуск разрешен: attachmentEventTopic.send.run.mode = 1;текущее время >= attachmentEventTopic.send.run.beginTime;текущее время <= attachmentEventTopic.send.run.endTime'
+          - name: result
+            value: Выполнен переход на шаг2 алгоритма
+      - iteration_id: '2'
+        params:
+          - name: msg
+            value: 'Алгоритм запускается повторно. Запуск разрешен: attachmentEventTopic.send.run.mode = 1;текущее время >= attachmentEventTopic.send.run.beginTime;текущее время <= attachmentEventTopic.send.run.endTime'
+          - name: result
+            value: Выполнен переход на шаг2 алгоритма
+      - iteration_id: '3'
+        params:
+          - name: msg
+            value: С частотой, указанной в системном параметре attachmentEventTopic.send.run.controlTimeInterval, Система проверяет, что разрешено запуститься
+          - name: result
+            value: Выполнен переход на шаг2 алгоритма
+      - iteration_id: '4'
+        params:
+          - name: msg
+            value: ' attachmentEventTopic.send.run.mode = 0'
+          - name: result
+            value: Запуск не разрешен
+      - iteration_id: '5'
+        params:
+          - name: msg
+            value: текущее время < attachmentEventTopic.send.run.beginTime
+          - name: result
+            value: Запуск не разрешен
+      - iteration_id: '6'
+        params:
+          - name: msg
+            value: текущее время > attachmentEventTopic.send.run.endTime
+          - name: result
+            value: Запуск не разрешен
+      - iteration_id: '7'
+        params:
+          - name: msg
+            value: Команда сейчас работает(есть запись с условиями SRV.RUN_CONTROL.IS_RUNNING = 1; current_timestamp минус SRV.RUN_CONTROL.LAST_DATE <= attachmentEventTopic.send.resetPeriod; SRV.RUN_CONTROL.CODE = 'AET_SEND')
+          - name: result
+            value: Запуск не разрешен
+  - case_id: 69cd4c37-760a-4c38-96af-a2f6b72fb4cd
+    title: 2.Проверка фиксации начала работы команды в таблице SRV.RUN_CONTROL
+    description: ''
+    priority: medium
+    steps:
+      - action: Действие <msg>
+        expected_result: Ожидаемый результат <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: msg
+            value: Нет записи SRV.RUN_CONTROL.CODE = 'AET_SEND'
+          - name: result
+            value: Система создает новую запись в SRV.RUN_CONTROL
+      - iteration_id: '2'
+        params:
+          - name: msg
+            value: Есть запись SRV.RUN_CONTROL.CODE = 'AET_SEND' и SRV.RUN_CONTROL.IS_RUNNING = 0
+          - name: result
+            value: Система обновляет запись в SRV.RUN_CONTROL
+      - iteration_id: '3'
+        params:
+          - name: msg
+            value: Есть запись SRV.RUN_CONTROL.CODE = 'AET_SEND' и (SRV.RUN_CONTROL.IS_RUNNING = 1 и current_timestamp минус SRV.RUN_CONTROL.LAST_DATE > attachmentEventTopic.send.resetPeriod)
+          - name: result
+            value: Система обновляет запись в SRV.RUN_CONTROL
+  - case_id: 8ed8cf07-7188-4be4-a801-a2d7a40542a9
+    title: 3.Проверка поиска записей в SRV.ATTACH_EVENT_TOPIC_SEND
+    description: ''
+    priority: medium
+    steps:
+      - action: Действие <msg>
+        expected_result: Результат <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: msg
+            value: Записи не найдены
+          - name: result
+            value: Система обновляет время SRV.RUN_CONTROL.LAST_DATE = current_timestamp, где SRV.RUN_CONTROL.CODE = 'AET_SEND', переход на шаг 5
+      - iteration_id: '2'
+        params:
+          - name: msg
+            value: 'Записи найдены и отсортированы по CREATE_DATE '
+          - name: result
+            value: Система обновляет время SRV.RUN_CONTROL.LAST_DATE = current_timestamp, где SRV.RUN_CONTROL.CODE = 'AET_SEND', переход на шаг 4
+  - case_id: 95bae9fc-6a65-461b-8c84-d65d1d27a7de
+    title: 4.1 Проверка отправки сообщения в топик AttachmentEventTopic
+    description: ''
+    priority: medium
+    steps:
+      - action: Действие <msg>
+        expected_result: Результат <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: msg
+            value: Сообщение успешно отправлено
+          - name: result
+            value: Переход на шаг 4.2
+      - iteration_id: '2'
+        params:
+          - name: msg
+            value: 'Получена ошибка "подключения" и выполнена N- попытка отправки сообщения, где N < attachmentEventTopic.send.kafka.countResendLimit '
+          - name: result
+            value: Система пытается повторно отправить сообщение через интервал времени attachmentEventTopic.send.kafka.unexpectedErrorWaitTime
+      - iteration_id: '3'
+        params:
+          - name: msg
+            value: 'Получена ошибка "отправки" и выполнена N- попытка отправки сообщения, где N < attachmentEventTopic.send.kafka.countResendLimit '
+          - name: result
+            value: Система пытается повторно отправить сообщение через интервал времени attachmentEventTopic.send.kafka.sendTimeInterval
+      - iteration_id: '4'
+        params:
+          - name: msg
+            value: Выполнена  N-попытка отправки сообщения, где  N=attachmentEventTopic.send.kafka.countResendLimit,
+          - name: result
+            value: Переход на шаг 4.3
+  - case_id: f8928cbd-bd68-4325-9b66-b34b1af5c27b
+    title: 4.2 Проверка изменений в БД после отправки сообщения в топик AttachmentEventTopic
+    description: ''
+    priority: medium
+    steps:
+      - action: _ <condition>
+        expected_result: _ <value>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: condition
+            value: Сообщение успешно отправлено в топик AttachmentEventTopic
+          - name: value
+            value: 'Сохраняет в служебную таблицу SRV.ATTACH_EVENT_TOPIC_SEND сведения об отправке:'
+      - iteration_id: '2'
+        params:
+          - name: condition
+            value: Сообщение успешно отправлено в топик AttachmentEventTopic
+          - name: value
+            value: Обновляет время в таблице SRV.RUN_CONTROL
+      - iteration_id: '3'
+        params:
+          - name: condition
+            value: Сообщение успешно отправлено в топик AttachmentEventTopic
+          - name: value
+            value: Переносит сведения в таблицу SRV.ATTACH_EVENT_TOPIC_SEND_LOG (строка в SRV.ATTACH_EVENT_TOPIC_SEND удаляется, в SRV.ATTACH_EVENT_TOPIC_SEND_LOG вставляется идентичная)
+      - iteration_id: '4'
+        params:
+          - name: condition
+            value: Сообщение успешно отправлено в топик AttachmentEventTopic. SRV.ATTACH_EVENT_TOPIC_SEND.OPERATION_TYPE содержится в параметре attachmentEventTopic.send.operationTypesForUpdateFerzlTransferred
+          - name: value
+            value: Сохраняет в таблице прикреплений ATTACH.ATTACHMENT признак отправки в ФЕРЗЛ
+      - iteration_id: '5'
+        params:
+          - name: condition
+            value: 'Сообщение успешно отправлено в топик AttachmentEventTopic. SRV.ATTACH_EVENT_TOPIC_SEND.OPERATION_TYPE содержится в параметре attachmentEventTopic.send.operationTypesForUpdateFerzlTransferred  И attachmentEventTopic.send.saveAttachmentHistory = 1 '
+          - name: value
+            value: Система сохраняет историю изменения прикрепления в таблицу ATTACH.ATTACHMENT_HISTORY
+      - iteration_id: '6'
+        params:
+          - name: condition
+            value: Сообщение успешно отправлено в топик AttachmentEventTopic. SRV.ATTACH_EVENT_TOPIC_SEND.OPERATION_TYPE содержится в параметре attachmentEventTopic.send.operationTypesForUpdateFerzlTransferred  И attachmentEventTopic.send.saveAttachmentHistory = 0
+          - name: value
+            value: Система не сохраняет историю изменения прикрепления в таблицу ATTACH.ATTACHMENT_HISTORY
+    pre-conditions: []
+  - case_id: ab7cd144-ff4d-4267-9de2-a157075bdaa0
+    title: 4.3 Проверка изменений в БД, если не удалось отправить сообщение в топик AttachmentEventTopic
+    description: ''
+    priority: medium
+    steps:
+      - action: Не удалось отправить сообщение за все попытки отправки (attachmentEventTopic.send.kafka.countResendLimit)
+        expected_result: |-
+          1) Система сохраняет в служебной таблице SRV.ATTACH_EVENT_TOPIC_SEND сведения об ошибке:
+          SRV.ATTACH_EVENT_TOPIC_SEND.ERROR = AT_SAET_001 - Непредвиденная ошибка при отправке сообщения в Kafka: <текст ошибки> (если текст ошибки превышает размер поля, то текст обрезается)
+          SRV.ATTACH_EVENT_TOPIC_SEND.CHANGE_DATE = current_timestamp
+          2) Система сохраняет время в таблице SRV.RUN_CONTROL:
+          SRV.RUN_CONTROL.LAST_DATE = current_timestamp, где SRV.RUN_CONTROL.CODE = 'AET_SEND'
+  - case_id: 23ccee9b-4cf6-4db2-a8ec-7cd23e809d35
+    title: 5.Проверка продолжения работы алгоритма
+    description: ''
+    priority: medium
+    steps:
+      - action: _ <mes>
+        expected_result: _ <result>
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: mes
+            value: Получена ошибка при отправке сообщения. Продолжить работу разрешено.
+          - name: result
+            value: Выполняется повторная отправка сообщения
+      - iteration_id: '2'
+        params:
+          - name: mes
+            value: Получена ошибка при отправке сообщения. Продолжить работу запрещено.
+          - name: result
+            value: Система фиксирует завершение работы Планировщика, обновляя статус в SRV.RUN_CONTROL
+      - iteration_id: '3'
+        params:
+          - name: mes
+            value: Сообщение успешно отправлено
+          - name: result
+            value: 'Переход на шаг 3.(Система обновляет время в таблице SRV.RUN_CONTROL:  SRV.RUN_CONTROL.LAST_DATE = current_timestamp, где SRV.RUN_CONTROL.CODE = ''AET_SEND'')'
+      - iteration_id: '4'
+        params:
+          - name: mes
+            value: Не было ниодной записи для отправки. Продолжить работу разрешено.
+          - name: result
+            value: Через интервал времени, указанный в параметре attachmentEventTopic.noDataWaitTime Система снова проверяет возможность продолжения работы
+      - iteration_id: '5'
+        params:
+          - name: mes
+            value: Не было ниодной записи для отправки.Продолжить работу запрещено.
+          - name: result
+            value: Система фиксирует завершение работы Планировщика, обновляя статус в SRV.RUN_CONTROL
+    pre-conditions: []

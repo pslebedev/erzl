@@ -1,0 +1,104 @@
+suite_id: 3575601a-834d-43ba-8d3f-3159cee621a8
+suite_name: Утвердить заявление на прикрепление в СМО Позитивные
+description: Описание
+created_at: '2026-02-09T10:55:08Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 0257a170-d00b-4db4-ad34-efd872322272
+    title: 1-6 Проверка система на корректность заполнения входных параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: "Вызвать метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами:\nattachmentId = ИД заявления на прикрепление\ninsuredAttr = Информация о ЗЛ (застрахованном лице)\nrepresentativeAttr = Информация о представителе ЗЛ\nattachmentRequestContent = Атрибуты заявления на прикрепление\nmoInfoRequest = Сведения о МО в заявлении на прикреплении\nattachDoctorInfo = Сведения о прикреплении к врачу\nscanInfo = Сведения о скане заявления на прикрепление\nattachmentRequestApproved = Атрибуты решения об утверждении или отказе заявления на прикрепление\nattachReqStatus = Статус заявления на прикрепление (arApproved)\nversion = Версия заявления\nattachmentRequestChangeDate = \t\nДата, время изменения заявления на прикрепление \nexternalContext = Контекстная информация"
+        expected_result: Проверка прошла успешна, переход к 7 шагу
+
+  - case_id: 27cbdf4f-0894-4744-a01e-c0bd99bded91
+    title: 7.Проверка обновления сведений о заявлении на прикрепление.
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |-
+          Система выполняет обновление сведений о заявлении на прикрепление на основании входных параметров REST метода вызова команды ApproveSmoAttachmentRequestCommand в записи attach.attachment.id = attachmentId (из запроса):
+          ref_attach_status_code_request = attachReqStatus
+          change_system_code = systemCode
+          ref_source_types_code = pickupPointOrganization
+          change_source_code = cоdeSМО
+          operator_changed = userId
+          operator_role = role
+          certificate_serial_number = значение входного параметра Operator (role)
+          signature_date_time = значение входного параметра Operator (signatureDateTime)
+          is_legal_entity = значение входного параметра Operator (isLegalEntity)
+          operator_organization = json по значению входного параметра Organization
+          operator_job = json по значению входного параметра Job
+          operator_user = json по значению входного параметра User
+          version = attach.attachment.version+1
+          attach_change_date = current_timestamp
+          change_date = current_timestamp
+
+  - case_id: d1df56ae-42e6-443a-8ac0-110b54226a5d
+    title: 8. Проверка предварительного сохранения истории изменения на заявления прикрепления
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |-
+          Система запускает SaveAttachmentRequestHistoryAlg - Алгоритм создания записи в истории. В алгоритм передаются следующие параметры:
+          attachmentId = ИД из входных параметров (attachmentId)
+          changeComand = ApproveSmoAttachmentRequestCommand
+          changeEvent = URLИ 
+          И сохраняет изменения в таблицу attach.attachment_history.
+
+  - case_id: 10bf793d-8a6c-4a5c-9d2d-917a8459229e
+    title: 9. Проверка предварительного сохранения сведений об утвержденном заявление на прикрепление.
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |-
+          Система запускает алгоритм  SaveApproveAttachmentRequestAlg - Алгоритм сохранения сведений заявления на прикрепление на момент утверждения.
+          И Сохраняет изменения в таблицу attachment_request_approved:
+
+  - case_id: fff70efd-6659-4e6b-a8fb-fe4a8e38e7e1
+    title: "10. Проверка формирования сообщения для\_ AttachmentRequestSmoApprovedEvent - Заявление утверждено в СМО."
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |-
+          При формировании сообщения передаются следующие параметры:
+
+          eventName =AttachmentRequestApprovedEvent
+          operationType = 'smoApproved'
+          attachmentId = ИД изменяемого заявления на прикрепление, найденного на шаге 2.
+
+  - case_id: 77bbb220-bf1e-4d40-96f2-c124e4a8276c
+    title: "11. Проверка формирования события\_AttachmentApprovedEvent-Принято решение о прикреплении"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: 'прикрепление успешно создано: команда ApprovedAttachmentCommand вернула ИД сформированного сообщения, то переход на следующий шаг,'
+
+  - case_id: 9bb82a5c-cf1c-4c5c-abdd-9a12f98e3c87
+    title: 12 Проверка сохранения изменений на шагах 7-11
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |
+          нужна аналитика
+
+  - case_id: daab3f18-1f95-421f-a8ac-c33c54ddadb6
+    title: 13. Проверка возвращения ответа 200 с телом ответа
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызван метод PATH /api/v1/AttachmentRequest/ApproveSmoAttachmentRequestCommand с корректно заполненными параметрами
+        expected_result: |-
+          Пришел ответ 200. 
+          attachmentId = attach.attachment.id
+          attachReqStatus = attach.attachment.ref_attach_status_code_request
+          attachReqStatusName = ref.attach_status.name,
+          где ref.attach_status.code = attach.attachment.ref_attach_status_code_request

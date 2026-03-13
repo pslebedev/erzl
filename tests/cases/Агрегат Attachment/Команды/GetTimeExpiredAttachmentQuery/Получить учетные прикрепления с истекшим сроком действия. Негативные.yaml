@@ -1,0 +1,20 @@
+suite_id: e75ca750-6608-4bc9-bd85-aa49152f4864
+suite_name: Негативные проверки команды GetTimeExpiredAttachmentQuery
+description: Проверка условий, при которых команда GetTimeExpiredAttachmentQuery должна возвращать ошибки
+created_at: '2026-01-14T13:03:01Z'
+status: new
+test_cases:
+  - case_id: fdce32a4-10e0-4390-b47a-a734fc3fd8c5
+    title: 1. Проверка получения непредвиденной ошибки при недоступности базы данных
+    description: ''
+    priority: high
+    steps:
+      - action: Запустить алгоритм
+        expected_result: |
+          Система пытается выполнить поиск в таблице attach.attachment.
+          При выполнении запроса к базе данных получена непредвиденная ошибка.
+    pre-conditions:
+      - action: |-
+          База данных недоступна или таблица attach.attachment заблокирована.
+          Все параметры события TimeExpiredAttachmentScheduleFiredEvent валидны.
+        expected_result: ''

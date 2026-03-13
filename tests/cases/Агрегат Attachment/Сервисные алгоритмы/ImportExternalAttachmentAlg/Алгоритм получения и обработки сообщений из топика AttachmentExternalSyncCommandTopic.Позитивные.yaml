@@ -1,0 +1,61 @@
+suite_id: 978aae2d-7a2b-4d16-862a-734c5957852b
+suite_name: "Позитивные"
+description: "Алгоритм получения и обработки сообщений из топика AttachmentExternalSyncCommandTopic. Позитивные"
+created_at: "2025-10-17T14:33:29.970Z"
+status: new
+created_by: ""
+test_cases:
+
+
+  - case_id: e9bcaac0-7a23-449d-bf0a-873204702916
+    title: Проверка реализации возможности запуска планировщика
+    description: "Проверка реализации возможности запуска функции по расписанию, установленному в таблице системных параметров"
+    priority: medium
+    steps:
+    - action: Выполнить действие
+      expected_result: Ожидаемый результат
+  
+  - case_id: e3939df2-ddc3-47c0-b6d4-26488f55b821
+    title: "Проверка получения события из топика AttachmentExternalSyncCommandTopic"
+    priority: high
+    steps:
+    - action: Выключить планировщик
+    - action: Сформировать и отправить сообщение <value> в Kafka в топик AttachmentExternalSyncCommandTopic
+    - action: Включить планировщик
+      expected_result: Система сохранила сведения в таблицу srv.attach_external_topic_receive
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: value
+        value: "ExternalAttachmentApprovedEvent"
+    - iteration_id: '2'
+      params:
+      - name: value
+        value: "ExternalAttachmentCancelledEvent"    
+    - iteration_id: '3'
+      params:
+      - name: value
+        value: "ExternalAttachmentClosedEvent"
+
+
+  - case_id: 858af455-63ff-491e-ac6d-d46e1cd861e5
+    title: "Проверка получения события из топика AttachmentExternalSyncCommandTopic при наличии поля, несуществующего в схеме json"
+    priority: medium
+    steps:
+    - action: Выключить планировщик
+    - action: Сформировать и отправить сообщение <value> в Kafka в топик AttachmentExternalSyncCommandTopic
+    - action: Включить планировщик
+      expected_result: Сообщение распарсено. Система сохранила сведения в таблицу srv.attach_external_topic_receive
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: value
+        value: "ExternalAttachmentApprovedEvent"
+    - iteration_id: '2'
+      params:
+      - name: value
+        value: "ExternalAttachmentCancelledEvent"    
+    - iteration_id: '3'
+      params:
+      - name: value
+        value: "ExternalAttachmentClosedEvent"

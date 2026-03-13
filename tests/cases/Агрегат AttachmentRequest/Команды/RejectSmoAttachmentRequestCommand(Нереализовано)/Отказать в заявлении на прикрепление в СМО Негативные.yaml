@@ -1,0 +1,132 @@
+suite_id: 2bc7678a-ce6d-4892-b78f-841fe3e599be
+suite_name: Отказать в заявлении на прикрепление в СМО Негативные
+description: Описание
+created_at: '2026-02-11T05:30:46Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 6e25468c-b1bd-4775-9e46-822b4310a276
+    title: АС1. Проверка формирования ошибки при некорректной передаче входных параметров.
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          с параметрами = <value>
+        expected_result: "\t\nСистема возвращает ответ с кодом 400 и кодом ошибки InvalidRequestParameters Ошибка формата запроса: {0}."
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: <value>
+            value: не передавать attachmentId
+      - iteration_id: '2'
+        params:
+          - name: <value>
+            value: в другом формате attachmentId
+      - iteration_id: '3'
+        params:
+          - name: <value>
+            value: не передавать insuredAttr
+      - iteration_id: '4'
+        params:
+          - name: <value>
+            value: в другом формате insuredAttr
+      - iteration_id: '5'
+        params:
+          - name: <value>
+            value: не передавать attachmentRequestContent
+      - iteration_id: '6'
+        params:
+          - name: <value>
+            value: в другом формате attachmentRequestContent
+      - iteration_id: '7'
+        params:
+          - name: <value>
+            value: не передавать moInfoRequest
+      - iteration_id: '8'
+        params:
+          - name: <value>
+            value: в другом формате moInfoRequest
+      - iteration_id: '9'
+        params:
+          - name: <value>
+            value: не передавать attachReqStatus
+      - iteration_id: '10'
+        params:
+          - name: <value>
+            value: в другом формате attachReqStatus
+
+  - case_id: 58c8a660-88cc-4823-88df-ee6340b640f8
+    title: АС2. Проверка формирования ошибки при поиске прикрепления по attachmentId
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          с attachmentId = несуществующий
+        expected_result: 'Система возвращает ответ с кодом 404 и кодом ошибки AttachmentRequestNotFound '
+
+  - case_id: f1d981a1-c7c3-4c4e-a601-c6346653e6de
+    title: АС.3 Проверка формирования ошибки при статусе у прикрепления "Просрочено СМО" (arExpiredSMO).
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          attachmentID прикрепления у которого ref_attach_status_code_request = arExpiredSMO
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки AttachmentRequestRejectExpired Заявление на прикрепление с id = {0} в статусе {1} - нарушен срок работы с заявлением. Заявление просрочено.
+
+  - case_id: 5230ff10-1d9d-47c7-b71a-7fc04ff8f839
+    title: "АС4. Проверка формирования ошибки при статусе у прикрепление не\_ ровно\_arApproved"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          attachmentID прикрепления у которого ref_attach_status_code_reques = <value>
+        expected_result: "Система возвращает ответ с кодом 409 и кодом ошибки\nInvalidAttachReqStatus \tСтатус заявления на прикрепление не позволяет выполнить действие: код статуса = {0} ."
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: arCreated
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: arExpired
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: aClosing
+
+  - case_id: 59eadd60-0ece-4aea-8950-74623888009a
+    title: "АС5. Проверка формирования ошибки при проверке\_заявление на прикрепление не имеет причину прикрепления \"Смена места жительства/пребывания\""
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          attachmentID прикрепления у которого ref_attach_open_code = 1 (Выбор/смена МО)
+        expected_result: |-
+          Система возвращает ответ с кодом 409 и кодом ошибки  InvalidAttachOpen
+          Причина прикрепления не соответствует "По смене места жительства": код={0} ({1})
+
+  - case_id: 86dbc1d5-697f-438e-9da3-0e7fd9249d96
+    title: "АС6. Проверка формирования ошибки при несоответствии\_PickupPoint (cоdeSМО)) коду смо\_(person_info.ref_f002_smo_code) у прикрепления."
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Существует прикрепление с  person_info.ref_f002_smo_code = 70012
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand с ид прикрепления и pickupPointOrganization = 77015
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки InvalidInitiator Инициатору запроса {0} недоступно изменение заявления на прикрепление. В заявлении инициатор - {1}.
+
+  - case_id: be6ac3ea-96ae-4148-9c05-ca02e87be435
+    title: АС7. Прерка формирования ошибки при не успешном создании прикрепления
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATH /api/v1/AttachmentRequest/RejectSmoAttachmentRequestCommand
+          и оборвать связь с bd
+        expected_result: В случае, если на любом шаге основного алгоритма произошла непредвиденная ошибка, то Система возвращает ответ с кодом 500.

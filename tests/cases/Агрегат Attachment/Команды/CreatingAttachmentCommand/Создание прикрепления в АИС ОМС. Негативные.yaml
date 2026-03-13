@@ -1,0 +1,18 @@
+suite_id: 24343513-47db-4bc4-9e99-4485ba91f2f3
+suite_name: "Создание прикрепления в АИС ОМС. Негативные"
+description: "Команда служит для создания прикрепления в ОМС.ЕРЗЛ.Прикрепления и инициации отправки сведений о прикреплении для передачи ФЕРЗЛ (передача в ФЕРЗЛ выполняется на стороне ОМС.ЕРЗЛ.Интеграция с ФЕРЗЛ)"
+created_at: "2025-10-17T10:54:16.443Z"
+status: new
+created_by: ""
+test_cases:
+  - case_id: 5c7fe9f7-5a71-411b-935d-5cbf2f405169
+    title: "Проверка попытки создания прикрепления c уже имеющимся   ИД ЕРЗЛ2"
+    priority: high
+    pre-conditions:
+      - action: "Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED"
+        expected_result: "В БД имеется прикрепление с attachExtId = 987654321"
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |
+          "Система формирует ошибку 'AT_CRAC_001 - В Системе уже есть прикрепление с идентификатором attachExtId = 987654321 (ИД прикрепления АИС ОМС = {1})'"
+  

@@ -1,0 +1,27 @@
+suite_id: 9ff97182-6267-41f7-8c24-edd87ad8ebf6
+suite_name: Подтверждение создания прикрепления в ФЕРЗЛ. Негативные
+description: ""
+created_at: 2025-11-05T11:27:57.355Z
+status: new
+created_by: ""
+test_cases:
+  - case_id: 8c5e2f11-94d8-41a2-a4da-44613627428a
+    title: Проверка на некорректные  входные данные  (ошибка AT_CRAD_001)
+    description: ""
+    pre-conditions:
+      - action: Запущен сервис обработки команд        
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentRequestCommandTopic событие FerzlAttachmentCreatedResultEvent с result != 1 или неполными данными.
+        expected_result: |
+          Команда завершена с ошибкой:
+          AT_CRAD_001 - На вход переданы данные несоответствующие команде.
+
+  - case_id: d2cc2d1b-06ad-4d13-8f82-cfbc323d3a32
+    title: Проверка ответа при найденном прикреплении (ошибка AT_CRAD_002)
+    priority: medium
+    steps:
+      - action: Отправить событие с attachId, которого нет в БД.
+        expected_result: |
+          Команда возвращает ошибку:
+          AT_CRAD_002 - Прикрепление с идентификатором {attachId} не найдено.

@@ -1,0 +1,27 @@
+suite_id: 65c8fb46-8edb-4ade-9ddf-721f9d56f702
+suite_name: Подтвердить аннулирование прикрепления по данным ФЕРЗЛ. Негативные
+description: Команда предназначена для обработки событий, содержащих сведения об успешном аннулировании (закрытии) прикрепления в ФЕРЗЛ Событие поступает в сообщении FerzlAttachmentClosedResultEvent из топика AttachmentRequestCommandTopic
+created_at: '2025-12-18T07:45:32Z'
+status: new
+created_by: p.lebedev
+test_cases:
+  - case_id: b7a10404-c640-4293-afe0-b732906420b4
+    title: Проека обработки ошибки при передаче некорректного attachId
+    description: АС.2
+    priority: high
+    steps:
+      - action: Отправить сообщение в топик AttachmentRequestCommandTopic со сведениями о подтверждении об аннулировании прикрепления, указав несуществующий attachId
+        expected_result: Система формирует ошибку с кодом "AT_CAAD_002 - Прикрепление с attachID =  {0} не найдено."
+    post-conditions:
+      - action: Перейти в таблицу srv.attach_request_command_topic_receive_log , отфильтровать сообщения по message_key
+        expected_result: 'В таблице имеется запись с сформированной ошибкой '
+  - case_id: 0528067e-63fc-4cc4-9b88-8a7c8bff0610
+    title: Проверка обработки ошибки при несоответствующем статусе прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentRequestCommandTopic со сведениями о подтверждении об аннулировании прикрепления '
+        expected_result: '"AT_IFAR_010 Прикрепление не может быть обновлено, полученные данные устарели. Текущий статус прикрепления <статус прикрепления> не соответствует типу операции <тип операции>."'
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING

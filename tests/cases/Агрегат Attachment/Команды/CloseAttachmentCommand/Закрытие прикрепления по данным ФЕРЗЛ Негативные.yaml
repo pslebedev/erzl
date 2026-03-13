@@ -1,0 +1,53 @@
+suite_id: dacff0df-eef5-4bcc-9389-39c317f59cae
+suite_name: Негативные
+description: Описание
+created_at: '2025-11-21T10:31:26Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 23f5a5a6-2de3-4b03-83ba-9f8360ee4604
+    title: "Проверка ошибки при передаче некорректных входных данных из события\_ FerzlAttachmentClosedResultEvent"
+    description: Описание
+    priority: medium
+    steps:
+      - action: Отправить на вход некорректные данные из события FerzlAttachmentClosedResultEvent
+        expected_result: Получена ошибка"AT_CLAD_001  Переданы некорректные параметры на вход."
+  - case_id: d5f07e61-20b5-43fb-9877-b435f2d84000
+    title: Проверка ошибки при передаче некорректных входных данных из события   AttachmentInsideClosеEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить на вход некорректные данные из события  AttachmentInsideClosеEvent
+        expected_result: Получена ошибка"AT_CLAD_001  Переданы некорректные параметры на вход."
+  - case_id: a30b3cda-ccf1-49a0-8c47-0c433531789d
+    title: "Проверка ошибки при передаче несоответствующих команде данных из события\_FerzlAttachmentClosedResultEvent"
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить на вход несоответсующие данные команде из события.
+        expected_result: Получена ошибка"AT_CLAD_002  На вход переданы данные несоответствующие команде."
+  - case_id: b5153432-705a-4ef0-adc2-602f08dc6062
+    title: Проверка ошибки при передаче несоответствующих команде данных из события AttachmentInsideClosеEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: Отправить на вход несоответсующие данные команде из события.
+        expected_result: Получена ошибка"AT_CLAD_002  На вход переданы данные несоответствующие команде."
+  - case_id: 208978c5-7ae3-4eec-84b9-245d939f2068
+    title: "Проверка ошибки при передаче некорректного ИД прикрепления из события\_FerzlAttachmentClosedResultEvent"
+    description: ''
+    priority: medium
+    steps:
+      - action: Передать несуществующий attachId прикрепления
+        expected_result: Получена ошибка "AT_CLAD_003 Прикрепление с attachID =  {0} не найдено"
+      - action: Передать некорректный формат attachId прикрепления
+        expected_result: Получена ошибка "AT_CLAD_003 Прикрепление с attachID =  {0} не найдено"
+  - case_id: 731bc803-9ac2-4af9-ad6c-ce6831662958
+    title: Проверка ошибки при передаче некорректного ИД прикрепления из события AttachmentInsideClosеEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: Передать несуществующий attachId прикрепления
+        expected_result: Получена ошибка "AT_CLAD_003 Прикрепление с attachID =  {0} не найдено"
+      - action: Передать некорректный формат attachId прикрепления
+        expected_result: Получена ошибка "AT_CLAD_003 Прикрепление с attachID =  {0} не найдено"

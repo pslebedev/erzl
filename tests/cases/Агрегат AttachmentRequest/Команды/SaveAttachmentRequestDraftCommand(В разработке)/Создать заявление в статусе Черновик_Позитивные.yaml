@@ -1,0 +1,54 @@
+suite_id: c944690c-0661-4778-a0f3-2e1ef31c7b29
+suite_name: Создать заявление в статусе Черновик_Позитивные
+description: Описание
+created_at: '2026-01-14T13:42:03Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: bf3bce3b-50a2-4521-99bd-54dd88f32c1b
+    title: Проверка возможности сохранения заявления на прикрепление
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 7e35982a-f2b1-4d00-8212-bd3bb588da9f
+    title: Проверка создания заявления на прикрепление в статусе Черновик
+    description: Описание
+    priority: high
+    steps:
+      - action: '!Параметризация на входные значения'
+        expected_result: Ожидаемый результат
+    pre-conditions:
+      - action: Не передан параметр attachmentId во входных параметрах
+        expected_result: Результат предусловия
+
+  - case_id: 6c7de440-a5c8-4637-b3bf-d16f79a97bb2
+    title: Проверка изменения заявления на прикрепление в статусе Черновик
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+
+          !Параметризация на входные значения
+        expected_result: Ожидаемый результат
+    pre-conditions:
+      - action: Передан attachmentId во входных параметрах
+        expected_result: ''
+
+  - case_id: c5d16d8b-88e1-474f-bdf1-ba1532358332
+    title: "Проверка\_ сохранения истории изменения заявления на прикрепление"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: cdce8045-dbeb-421e-b56b-c7dac8ad766a
+    title: "Проверка формирования события\_ AttachmentRequestDraftSavedEvent для отправки в\_ топик\_AttachmentRequestEventTopic"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

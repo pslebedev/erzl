@@ -1,0 +1,26 @@
+suite_id: de872bdf-d64d-4f0a-a40c-423b50495508
+suite_name: Аннулирование прикрепления в АИС ОМС . Негативные
+description: Команда служит для создания прикрепления в ОМС.ЕРЗЛ.Прикрепления и инициации отправки сведений о прикреплении для передачи ФЕРЗЛ
+created_at: 2025-10-17T13:23:42.581Z
+status: new
+created_by: Лебедев Павел
+test_cases:
+  - case_id: 118c02e0-1eca-447b-a669-0527bb4f19b5
+    title: Проверка ошибки если прикрепление не найдено 
+    description: ""
+    priority: high
+    pre-conditions:
+      - action: В бд отсутствует прикрепление         
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: Система формирует ошибку с кодом "AT_CAAC_001 - Прикрепление с attachExtId = {0} не найдено"
+
+  - case_id: 66394179-6e50-4204-b008-03119a0a0934
+    title: Проверка ошибки если прикрепление не найдено 
+    description: ""
+    priority: high
+    pre-conditions:
+      - action: В БД есть запись attach.attachment ,но is_active=0
+    steps:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CANCELLED
+        expected_result: Система формирует ошибку с кодом "AT_CAAC_002 - Прикрепление с attachExtId = {0} является недействующим"

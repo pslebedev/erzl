@@ -1,0 +1,14 @@
+suite_id: 767f126c-41d5-44a7-a62c-20acfa5ab937
+suite_name: CheckAttachmentRequestAlg_Позитивные
+description: CheckAttachmentRequestAlg - Алгоритм проверки возможности сохранения заявления на прикрепление
+created_at: '2026-01-12T07:22:47Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 59e32adc-2e1a-4102-8181-6cedef6d5b92
+    title: '1. '
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

@@ -1,0 +1,555 @@
+suite_id: 4b20a1de-e8ce-48f7-ba77-0d9bb8a24690
+suite_name: Утвердить заявление на прикрепление. Позитивные
+description: Позитивные проверки сценариев работы команды ApproveAttachmentRequestCommand - утверждение заявления на прикрепление
+created_at: '2026-01-20T06:56:49Z'
+status: new
+test_cases:
+  - case_id: 00b122b7-4aea-4b3b-8190-bc36fc79f4df
+    title: 1. Проверка корректности заполнения входных параметров в соответствии со схемой
+    description: ''
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с корректно заполненными параметрами:
+          attachmentId = ИД заявления на прикрепление
+          dateDoctorDecision = Дата решение о прикреплении ЗЛ к МО
+          chiefDocApproverId = ИД главного врача МО
+          decisionApproved = Сведения решения о прикреплении
+          scanInfo = Скан заявления на прикрепление (scanTypeCode = 2)
+          externalContext = Контекстная информация
+        expected_result: |-
+          Система проверяет корректность заполнения входных параметров в соответствии со схемой.
+          Все обязательные параметры присутствуют.
+          Все параметры соответствуют типу и формату.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Все входные параметры заполнены корректно и соответствуют схеме запроса
+        expected_result: ''
+
+  - case_id: 0eb85ef2-2f0f-4ff7-af9b-af83f7ab4b35
+    title: 2. Проверка существования заявления на прикрепление по attachmentId
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand 
+          с attachmentId существующего заявления на прикрепление
+        expected_result: |-
+          Система проверяет наличие заявления в БД.
+          Условие поиска: attach.attachment.id = attachmentId
+          Заявление на прикрепление найдено.
+          Переход на следующий шаг.
+    pre-conditions: []
+
+  - case_id: 02bc7759-bb88-42b1-b985-df0e647f7202
+    title: 3. Проверка, что заявление не имеет статус (arExpiredDoc)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand 
+          с attachmentId заявления, у которого attach.attachment.ref_attach_status_code <>(не равны) arExpiredDoc, где attach.attachment.id = attachmentId
+        expected_result: |-
+          Система проверяет статус заявления.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 0cf98a7f-2104-48a0-9f4e-3242a83b98cc
+    title: 4. Проверка, что заявление имеет статус "Заявление создано" (arCreated)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand 
+          с attachmentId заявления в статусе attach.attachment.ref_attach_status_code = arCreated
+        expected_result: |-
+          Система проверяет статус заявления.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существует заявление c
+          attach.attachment.ref_attach_status_code = arCreated
+        expected_result: ''
+
+  - case_id: 3efaaa55-a4da-418c-afeb-bf0b3bf17028
+    title: 5. Проверка доступа инициатору для изменения заявления на прикрепление
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          от имени инициатора(attachmentId) с параметрами:
+          - PickupPoint(pickupPointOrganization) = "mo" - из таблицы ref.OmsInfoSources
+          который соответсвует 
+          - PickupPoint(cоdeМО) = MoInfo(moCodeVsi)
+          - MoInfo(moCodeVsi) = attach.attachment.ref_mo_mgfoms_core_code_vsi_mo
+        expected_result: |-
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: |-
+          Инициатор запроса имеет тип организации "mo".
+          moCodeVsi инициатора соответствует МО заявления на прикрепление.
+        expected_result: ''
+
+  - case_id: e30b5f4a-0257-47cc-9ce2-c54bd6b6b590
+    title: 6. Проверка корректности значений входных параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректно(валидными) заполненными параметрами:
+          attachmentId = ИД заявления на прикрепление 
+          dateDoctorDecision = Дата решение о прикреплении ЗЛ к МО
+          chiefDocApproverId = ИД главного врача МО
+          decisionApproved = Сведения решения о прикреплении
+          scanInfo = Скан заявления на прикрепление (scanTypeCode = 2)
+          externalContext = Контекстная информация
+        expected_result: |-
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Проверки 1-5 выполнены успешно
+        expected_result: Результат предусловия
+
+  - case_id: a5cee3da-07e0-43bf-bc28-4403ff056f39
+    title: "6.1.1 Проверка удаления пробелов в начале и вконце строки у параметров\_ScanInfo(scanId) и\_ScanInfo(scan)."
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand:
+          С параметрами запроса:
+          <value> = "  " пробелы
+
+        expected_result: |-
+          Проверка пройдена
+
+          в таблице attach.scan_info :
+          scanId = null потому что переданы пробелы.
+
+          Переход на след шаг
+    pre-conditions:
+      - action: ''
+        expected_result: ''
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: scanId
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: scan
+
+  - case_id: a3a3a24e-a988-4489-8c08-40718ef9ca97
+    title: "6.1.2 Успешная проверка системой при передаче одного параметра\_ ScanInfo"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand:
+          С параметром ScanInfo:
+          <value> = значение (пока не понятно как будет реализовано получение параметров)
+        expected_result: |-
+          Проверка пройдена успешно.
+          в таблице attach.scan_info :
+          scanId = переданное значение 
+
+          Переход на следующий шаг.
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: scan
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: scanId
+
+  - case_id: f4b82f2b-1bc3-4a50-850a-4209569e15e3
+    title: "6.2\_Проверка на отсутствие в обязательных параметрах пустых атрибутов/пустых строк"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с attachmentId прикрепления у которого заполненн параметр:
+          - AttachDoctorInfo.areaNum - "02" (или друго существующий)
+        expected_result: |-
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+
+  - case_id: c7de165b-3601-4c11-a354-d04da3ecd3c6
+    title: 7. Проверка типа переданного скана (scanTypeCode = "2")
+    description: ''
+    priority: high
+    steps:
+      - action: |+
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId прикрепления у которого scanTypeCode= "2" "Заявление с решением главного врача" и 
+          scanInfo (<value>) = значение
+
+        expected_result: |-
+          Система проверяет тип переданного скана.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions: []
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: scan
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: scanId
+
+  - case_id: 066c9587-a7ce-4325-9d01-8091cbbb6bee
+    title: 8. Проверка соответствия входных параметров значениям справочников
+    description: Проверка, что переданные значения соответствуют значениям справочников в БД
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId прикрепления у которого  значения существуют в соответствующих справочниках:
+
+          -attachRefuseCode(AttachmentRequestApproved) соответсвтует справочнику  ref.attach_refuse.code где is_archive=false
+          -chiefDocApproverId(AttachmentRequestApproved) соответсвует справочнику ref.medical_stuff_mo.doctor_id где is_archive=false
+          -areaId (AttachDoctorInfo) соответсвует справочнику ref.area_mo.area_id где is_archive=false
+          -doctorSnils (AttachDoctorInfo) соответсвтует справочнику ref.frmr_persons.snils где is_archive=false
+          -doctorOid (AttachDoctorInfo) соответсвтует справочнику ref.frmr_persons.oid где is_archive=false
+          -pickupPointOrganization(PickupPoint) соответсвтует справочнику ref.source_types.code где is_archive=false
+        expected_result: |-
+          Система проверяет соответствие входных параметров справочным значениям в БД.
+          Все переданные значения существуют в соответствующих справочниках.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions: []
+
+  - case_id: 183a31cd-ea39-46c1-9ae7-056741cd6df8
+    title: 9. Проверка корректности даты принятия решения (dateDoctorDecision)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с параметром AttachmentRequestApproved.dateDoctorDecision = <value>
+        expected_result: |-
+          Система проверяет корректность даты принятия решения.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions: []
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: '= attach.attachment.apply_reg_date (равно дате регистрации заявления на прикрепление)'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: '> attach.attachment.apply_reg_date (не ранее даты регистрации заявления на прикрепление)'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: < attach.attachment.apply_reg_date + 2 дня (не позднее 2 дня да от даты регистрации)
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: '= attach.attachment.apply_reg_date + 2 дня (на границе + 2 дня)'
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: '= текущая дата - 2 дня ( на границе - 2 дня)'
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: '> текущая дата - 2 дня ( не ранее - 2 дня)'
+      - iteration_id: '7'
+        params:
+          - name: value
+            value: < текущая дата + 1 день  (не позднее +1 день)
+      - iteration_id: '8'
+        params:
+          - name: value
+            value: '= текущая дата + 1 день (на границе + 1)'
+
+  - case_id: a6db7859-a305-4056-b075-8260361fc2d1
+    title: 10. Проверка корректности даты начала действия прикрепления
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с параметром AttachmentRequestApproved.dateBegin = <value>
+        expected_result: |-
+          Система проверяет корректность даты начала действия прикрепления.
+          Проверка пройдена успешно.
+          Переход на следующий шаг.
+    pre-conditions: []
+    iterations:
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: '>  AttachmentRequestApproved (dateDoctorDecision)'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: '=  AttachmentRequestApproved (dateDoctorDecision)'
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: '= текущая дата - 2 дня'
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: '> текущая дата - 2 дня'
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: < текущая дата + 30 дней
+      - iteration_id: '7'
+        params:
+          - name: value
+            value: '= текущая дата + 30 дней'
+
+  - case_id: f63c3086-10f0-4d27-b504-68cf457ab5c9
+    title: 11. Проверка формирования директив на утверждение заявления (для подушевого прикрепления)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с attachmentId заявления, у которого тип = "1" (Подушевое прикрепление)
+          Сынициировать возвращение флага разрешения у метода ValidateAttachmentRequestQuery
+        expected_result: |-
+          Система вызывает метод ValidateAttachmentRequestQuery с параметром attachmentId.
+          В ответе ValidateAttachmentRequestQuery получен флаг, разрешающий прикрепление.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существует заявление с указанным attachmentId.
+          attach.attachment.ref_attach_type_code = 1 (Подушевое прикрепление).
+        expected_result: ''
+
+  - case_id: d827b436-25c7-4b4f-a0c1-2d1df7505d26
+    title: 12. Проверка удаления пробелов при сохранении строковых значений
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами, содержащими пробелы в начале и конце строковых значений
+        expected_result: |-
+          Система предварительно удаляет все пробелы в начале и конце строки для строковых значений.
+          Данные сохранены в  attach.attachment без лишних пробелов.
+          Переход на следующий шаг.
+    pre-conditions: []
+
+  - case_id: dab9d9c9-ce49-43a4-9f8b-4c17b8f2bf2b
+    title: 12.1. Проверка обновления сведений заявления на прикрепление на основании входных параметров REST метода
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами
+        expected_result: |-
+          Система выполняет обновление сведений о заявлении на прикрепление в таблице attach.attachment:
+          - ref_attach_status_code_request = arApproved
+          - date_doctor_decision = значение входного параметра AttachmentRequestApproved (dateDoctorDecision)
+          - ref_medical_stuff_mo_doctor_id_chief = значение входного параметра AttachmentRequestApproved (chiefDocApproverId)
+          - area_num = значение входного параметра AttachDoctorInfo (areaNum)
+          - area_frmo_id = значение входного параметра AttachDoctorInfo (areaId)
+          - ref_area_mo_area_id = значение входного параметра AttachDoctorInfo (areaFrmoId)
+          - ref_medical_stuff_mo_doctor_id = значение входного параметра AttachDoctorInfo (doctorId)
+          - doctor_since = значение входного параметра AttachDoctorInfo (doctorSince)
+          - ref_frmr_persons_snils = ref.medical_stuff_mo.doctor_snils, где ref.medical_stuff_mo.doctor_id = AttachmentRequestApproved (doctorId)
+          - ref_frmr_persons_oid = ref.frmr_persons.oid, где ref.frmr_persons.snils = ref.medical_stuff_mo.doctor_snils
+          - date_begin = значение входного параметра DecisionApproved (dateBegin)
+          - date_end = значение входного параметра DecisionApproved (dateEnd)
+          - change_system_code = значение входного параметра Metadata (systemCode)
+          - ref_source_types_code = значение входного параметра PickupPoint (pickupPointOrganization)
+          - change_source_code = значение входного параметра PickupPoint (codeМО)
+          - operator_changed = значение входного параметра Operator (userId)
+          - operator_role = значение входного параметра Operator (role)
+          - certificate_serial_number = значение входного параметра Operator (certificateSerialNumber)
+          - signature_date_time = значение входного параметра Operator (signatureDateTime)
+          - is_legal_entity = значение входного параметра Operator (isLegalEntity)
+          - operator_organization = json по значению входного параметра Organization
+          - operator_job = json по значению входного параметра Job
+          - operator_user = json по значению входного параметра User
+          - version = attach.attachment.version + 1
+          - attach_change_date = current_timestamp
+          - change_date = current_timestamp
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Все предыдущие проверки пройдены успешно.
+        expected_result: ''
+
+  - case_id: 7adb5aae-6d3e-4cbc-a4bf-df834f0faaa0
+    title: 12.2.1 Проверка сохранения сведений о скане при передаче ScanInfo(snan) = в формате base64
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами и scanInfo = scan в формате base64
+        expected_result: |-
+          Система сохраняет данные скана в хранилище документов и формирует для него уникальный идентификатор скана в АИС ОМС (ScanInfo(scanId)) который передается для создания записи сведений о скане в таблице  attach.scan_info.
+          В таблице появилась запись и с присвоенным scanId.
+
+  - case_id: 815d6a20-e727-4c0f-84b4-303f848d427e
+    title: "12.2.2 Проверка сохранения сведений о скане при передаче\_ScanInfo(scanId)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами и scanInfo = scanId
+        expected_result: Система не нашла в таблице attach.scan_info.scan_id переданный scanId. переход на  шаг 2.3 Сохранение сведений в таблицу.
+
+  - case_id: 195603a8-2554-4ed4-8b2e-50e4fdaf86f2
+    title: 12.2. Проверка сохранения сведений о скане в таблице attach.scan_info
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами и scanInfo = <value>
+        expected_result: |-
+          Система выполняет поиск скана: attach.scan_info.id <> ScanInfo(scanId).
+          Скан не найден.
+          Система предварительно сохраняет сведения о скане в таблице attach.scan_info:
+          - id = значение входного параметра ScanInfo (Если передан scan, то присвоенный scanId. Если передан scanId, то значение scanId)
+          - attachment_id = значение входного параметра attachmentId
+          - ref_scan_type_code = 2
+          - create_date = current_timestamp
+          - change_date = current_timestamp
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Все предыдущие проверки пройдены успешно.
+        expected_result: ''
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: scanId
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: scan (в формате base64)
+
+  - case_id: e0c0c171-4a0e-4348-9306-527e04ca7770
+    title: 13. Проверка предварительного сохранения истории изменения заявления
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами
+        expected_result: |-
+          Система вызывает алгоритм SaveAttachmentRequestHistoryAlg с параметрами:
+          - attachmentId = attachmentId из входных параметров
+          - changeComand = ApproveAttachmentRequestCommand
+          - changeEvent = URL REST метода для вызова команды ApproveAttachmentRequestCommand
+          История изменения заявления сохранена.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Обновление сведений о заявлении выполнено успешно (шаг 12).
+        expected_result: ''
+
+  - case_id: 4295362b-7667-407e-93ab-4e483f1b1bce
+    title: 14. Проверка сохранения сведений о заявлении на момент утверждения (attachOpen=1)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с attachmentId заявления attachOpen=1 (Выбор/смена МО)
+        expected_result: |-
+          Система запускает алгоритм SaveApproveAttachmentRequestAlg - Алгоритм сохранения сведений заявления на 
+          Система проверяет условие: attach.attachment.ref_attach_open_code='hospitalChange'.
+          Система сохраняет сведения о заявлении на момент утверждения.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: |-
+          В таблице attach.attachment существует заявление с указанным attachmentId.
+          attach.attachment.ref_attach_open_code = '1' (Выбор/смена МО).
+        expected_result: ''
+
+  - case_id: 40f9c513-d8db-42ab-a6e1-5ba7130080c5
+    title: 15. Проверка формирования сообщения AttachmentRequestApprovedEvent
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами
+        expected_result: |-
+          Система формирует сообщение для публикации события AttachmentRequestApprovedEvent
+          Параметры сообщения:
+          - eventName = AttachmentRequestApprovedEvent
+          - operationType = approved
+          - attachmentId = attachmentId из входных параметров
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: Предыдущие шаги (12-14) выполнены успешно.
+        expected_result: ''
+
+  - case_id: 587900b2-ced3-4a44-b70c-9d030898845f
+    title: "16. Проверка формирования события\_AttachmentApprovedEvent"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+
+          В таблице attach.attachment существует заявление с указанным attachmentId.
+          attach.attachment.ref_attach_open_code = '1' (Выбор/смена МО)
+        expected_result: |-
+          Система формирует событие AttachmentApprovedEvent-Принято решение о прикреплении с параметрами:
+          eventName =AttachmentApprovedEvent
+          attachReqStatus = arApproved
+          id = attachmentId из входных параметров
+          Переход на след шаг
+
+  - case_id: 77131dc3-17f7-45e8-968a-42e8db03f07d
+    title: 17. Проверка сохранения всех изменений (шаги 12-15)
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами
+        expected_result: |-
+          Система сохраняет все изменения, выполненные на шагах 12-15.
+          Сохранение выполнено успешно.
+          Переход на следующий шаг.
+    pre-conditions:
+      - action: |-
+          Шаги 12-15 выполнены успешно.
+          БД доступна для записи.
+        expected_result: ''
+
+  - case_id: 01fabced-9cd9-47ad-806e-07930ce5bc80
+    title: 18. Проверка возврата успешного ответа с кодом 200
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с корректными параметрами
+        expected_result: |-
+          Система возвращает ответ с кодом 200.
+          Тело ответа содержит:
+          - attachmentId - attach.attachment.id (ИД прикрепления (формат uuid))
+          - attachStatus - attach.attachment.ref_attach_status_code_request (код статуса заявления на прикрепление)
+          - attachReqStatusName - ref.attach_status.name,
+          где ref.attach_status.code = attach.attachment.ref_attach_status_code_request (наименование статуса заявления на прикрепление)
+    pre-conditions:
+      - action: Все изменения сохранены успешно (шаг 16).
+        expected_result: ''

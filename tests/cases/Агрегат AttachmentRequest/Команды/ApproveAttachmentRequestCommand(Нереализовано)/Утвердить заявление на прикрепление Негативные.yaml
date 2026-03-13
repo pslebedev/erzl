@@ -1,0 +1,301 @@
+suite_id: b5eabdbd-3fd9-487b-b5ef-6048633f8a10
+suite_name: Утвердить заявление на прикрепление. Негативные
+description: Негативные проверки сценариев работы команды ApproveAttachmentRequestCommand - утверждение заявления на прикрепление
+created_at: '2026-01-20T08:57:31Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: cd8094be-635d-41ba-b616-f695d456f1c1
+    title: AC1. Проверка формирования ошибки при некорректной передаче параметров
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          с параметрами = <value>
+        expected_result: 'Система возвращает ответ с кодом 400 и кодом ошибки InvalidRequestParameters Ошибка формата запроса: {0}.'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: передать несуществующий attachmentId
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: передать в другом формате attachmentId
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: передать не существующий attachmentRequestApproved
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: передать в другом формате attachmentRequestApproved
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: ' передать не существующий AttachDoctorInfo'
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: передать в другом формате AttachDoctorInfo
+      - iteration_id: '7'
+        params:
+          - name: value
+            value: передать не существующий scanInfo(кроме   "2" )
+      - iteration_id: '8'
+        params:
+          - name: value
+            value: передать в другом формате AttachDoctorInfo
+
+  - case_id: afc774b5-4850-4cb6-bca4-033dc1e4ebd1
+    title: "AC2. Проверка формирования ошибки при несуществующим\_attachmentId"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с несуществующим attachmentId
+        expected_result: Система возвращает ответ с кодом 404 и кодом ошибки AttachmentRequestNotFound Заявление на прикрепление с id = {0} не найдено.
+
+  - case_id: 10544cb0-7486-4eb9-9bd3-8673e931f5dd
+    title: AC3. Проверка формирования ошибки при просроченном сроке заявления (arExpiredDoc)
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId заявления из предусловия
+        expected_result: |-
+          Система возвращает ответ с кодом 409 и кодом ошибки
+          AttachmentRequestExpired Заявление на прикрепление с id = {0} в статусе {1} - нарушен срок работы с заявлением. Необходимо зарегистрировать новое заявление.
+    pre-conditions:
+      - action: Существует заявление с attach.attachment.ref_attach_status_code = arExpiredDoc
+        expected_result: Результат предусловия
+
+  - case_id: 6422f718-439e-4c0b-8ed6-5d6c057889ac
+    title: "АС4. Проверка формирования ошибки при несоответсвующем статус коде\_ заявления\_attach.attachment.ref_attach_status_code у переданного attachmentId"
+    description: ''
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId у которого attach.attachment.ref_attach_status_code = <status_code>
+        expected_result: 'Система возвращает ответ с кодом 409 и кодом ошибки InvalidAttachReqStatus Статус заявления на прикрепление не позволяет выполнит действие: код статуса = {0} .'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: status_code
+            value: aClosing
+      - iteration_id: '2'
+        params:
+          - name: status_code
+            value: arApproved
+
+  - case_id: f942f6f4-f61c-4d03-9c53-d059db016531
+    title: АС5.1 Проверка формирования ошибки при несоответствии типа организации "mo"
+    description: ''
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId у которого attach.attachment.ref_mo_mgfoms_core_code_vsi_mo = <mo>
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки InvalidInitiator Инициатору запросу {0} недоступно изменение заявления на прикрепление к МО {1}
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: mo
+            value: smo
+      - iteration_id: '2'
+        params:
+          - name: mo
+            value: mgfoms
+
+  - case_id: d2e78228-b591-4219-92e3-d86206c34291
+    title: АС5.2 Проверка формирования ошибки при несоответствии типа организации "mo"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с attachmentId у которого attach.attachment.ref_mo_mgfoms_core_code_vsi_mo указанный  не соответсвует moCodeVsi
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки InvalidInitiator Инициатору запросу {0} недоступно изменение заявления на прикрепление к МО {1}
+    iterations: []
+
+  - case_id: 7690b2f8-420a-4b7d-b088-07f019669f35
+    title: АС6. Проверка формирования ошибки при передаче неверных значений ScanInfo
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с заполененными параметрами и:
+        expected_result: Система возвращает ответ с кодом 400 и кодом ошибки InvalidAttachmentRequestParameters Для обязательного параметра {0} передано неверное значение {1} (пустой атрибут или пустая строка)
+    iterations:
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: 'Передать оба значения: scan и scanid'
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: передать scan в другом формате (только спецсимволы)
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: передать scanid в невалидном формате(на латинице, символы)
+
+  - case_id: 27b174d8-1b91-47ef-a0d2-7fea84c6b27c
+    title: АС7. Проверка формирования ошибки при передаче пустого значения AttachAreaDoctorInfo - параметры areaNum
+    description: Описание
+    priority: high
+    steps:
+      - action: 'Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с пустным значения у прикрепления areaNum. '
+        expected_result: Система возвращает ответ с кодом 400 и кодом ошибки InvalidAttachmentRequestParameters Для обязательного параметра {0} передано неверное значение {1} (пустой атрибут или пустая строка)
+
+  - case_id: ff500f1c-874e-4f7b-b9be-a4636a9018da
+    title: "АС8. Проверка формирования ошибки при проверке\_типа переданного скана (scanTypeCode)"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с параметром scanTypeCode = <value>
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки InvalidScanInfo Тип скана {0} указан неверно.
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: '1'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: '3'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: '4'
+
+  - case_id: 393c5172-81eb-4e1d-b517-a72d5703d745
+    title: "АС9. Проверка формирования ошибки при\_не найденных актуальных значений в соответствующих справочниках"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с прикреплением у которого is_archive = false и <value>
+        expected_result: Система возвращает ответ с кодом 409 и кодом ошибки FlkAttachmentRequestDictionaryValuesError Переданное значение параметра {0} = {1} отсутствует в справочнике.
+    tags:
+      - ''
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.attach_refuse.code параметр attachRefuseCode
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.medical_stuff_mo.doctor_id параметр chiefDocApproverId
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.area_mo.area_id параметр areaId
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.frmr_persons.snils параметр doctorSnils
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.frmr_persons.oid параметр doctorOid
+      - iteration_id: '6'
+        params:
+          - name: value
+            value: несуществующий в справочнике  ref.source_types.code параметр pickupPointOrganization
+      - iteration_id: '7'
+        params:
+          - name: value
+            value: несуществующие параметры в нескольких справочниках
+
+  - case_id: 343ec059-07e3-4905-9594-3b17ab15d44e
+    title: "АС10. Проверка формирования ошибки при некорректной дате принятия решения указанной во входном параметре\_ AttachmentRequestApproved\_(dateDoctorDecision)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с параметром 
+          dateDoctorDecision = <value>
+        expected_result: 'Система возвращает ответ с кодом 409 и кодом ошибки InvalidDateDoctorDecision Дата принятия решения по заявлению на прикрепление ({0}) не соответствует необходимым условиям: по дате регистрации ({1}) и текущей дате ({2}).'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: dateDoctorDecision < attach.attachment.apply_reg_date (дата принятия решения ранее регистрации заявления на прикрепление (attach.attachment.apply_reg_date), найденного на шаге 2)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: dateDoctorDecision > attach.attachment.apply_reg_date 3 дня (позднее на 3 дня от даты регистрации заявления на прикрепление (attach.attachment.apply_reg_date), найденного на шаге2)
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: dateDoctorDecision < текущая дата - 2 дня (ранее, чем 2 дня от текущей даты)
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: 'dateDoctorDecision > текущая дата+1 день '
+
+  - case_id: d96ac49a-bbf7-452b-bfc4-3066ff9db556
+    title: "AC11.\_Проверка формирования ошибки при некорректной дате\_начала действия прикрепления AttachmentRequestApproved (dateBegin)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с id прикрепления, у которого
+          dataBegin = <value> .
+        expected_result: 'Система возвращает ответ с кодом 409 и кодом ошибки InvalidDateBeginAttach Дата начала прикрепления ( {0} ) не соответствует необходимым условиям: по дате принятия решения ({1}) и текущей дате ({2}).'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: dateBegin < AttachmentRequestApproved (dateDoctorDecision) (позднее, чем дата принятия решения главным врачом о прикреплении AttachmentRequestApproved (dateDoctorDecision))
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: dateBegin < текущая дата - 2 дня (позднее чем 2 дня от текущей даты)
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: dateBegin > текущая дата +30 дней (ранее чем 30 дней от текущей даты)
+
+  - case_id: 6fe6f1a5-c253-4027-be5b-35c4d6fea11f
+    title: "АС12. Проверка формирования ошибки при получении флага отклонения прикрепления в ответе метода\_ ValidateAttachmentRequestQuery"
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с id прикрепления из предусловия и сынициировать флаг отклонения прикрепления в методе ValidateAttachmentRequestQuery
+        expected_result: |-
+          Система возвращает ответ с кодом 409 и кодом ошибки RejectDirectiveResult Получен флаг отклонения прикрепления. 
+          Причина: ({0}).
+    pre-conditions:
+      - action: Существует прикрепление с attachType = 1 (Подушевое прикрепление)
+        expected_result: Результат предусловия
+
+  - case_id: 0a101a88-6cca-44f2-8cb4-4fe8d9e81f80
+    title: АС13. Проверка формирования ошибки при получении непредвиденной ошибки в ответе метода  ValidateAttachmentRequestQuery
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand с id прикрепления из предусловия и сынициировать непредвиденную ошибку (недоступность бд)
+        expected_result: 'Система возвращает ответ с кодом 500 '
+    pre-conditions:
+      - action: Существует прикрепление с attachType = 1 (Подушевое прикрепление)
+        expected_result: Результат предусловия
+
+  - case_id: e0fe41ba-c74c-4379-8b09-cbd2f449a510
+    title: "AC13.1\_ 17 шаг. Проверка формирования ошибки при не сохранении данных при изменениях на шагах 12-15"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+          и сыиницировать непредвиденную ошибку при сохранение данных
+        expected_result: |-
+          Система возвращает ответ с кодом 500
+          Алгоритм завершится
+
+  - case_id: 9de6e8bc-af6a-4564-9bd6-f5c3da43ad5c
+    title: "АС13.2\_ \_16 шаг. Проверка формировния ошибки при формировании события\_AttachmentApprovedEvent с\_attachOpen =\_addressChange"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод PATCH /api/v1/AttachmentRequest/ApproveAttachmentRequestCommand
+
+          В таблице attach.attachment существует заявление с указанным attachmentId.
+          attach.attachment.ref_attach_open_code = '2'  (addressChange).
+        expected_result: Система возвращает ответ с кодом 500

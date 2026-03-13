@@ -1,0 +1,104 @@
+suite_id: 7712fe2a-552d-4431-bd1a-4e1cea9f1be1
+suite_name: Название test suite
+description: Описание
+created_at: '2026-02-16T05:20:32Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 12dcb3c0-a1ea-44bd-b930-c491878c3d07
+    title: АС1. Проверка формирования ошибки при передаче некорректных входных данных
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          тело использовать из предусловия а так же передать <value> 
+        expected_result: |-
+          Система возвращает ответ с кодом 400 и кодом ошибки
+          InvalidRequestParameters Ошибка формата запроса: {0}.
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: 'insuredPersonId: 1. Не передавать. 2. Передать в другом формате (текстом) 3. Передать пустой массив'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: 'startDate: 1. Не передавать. 2. Передать в другом формате (текстом) 3. Передать пустой массив'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: 'startDate: 1. Не передавать. 2. Передать в другом формате (текстом) 3. Передать пустой массив'
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: 'endDate: 1. Не передавать. 2. Передать в другом формате (текстом) 3. Передать пустой массив'
+      - iteration_id: '5'
+        params:
+          - name: value
+            value: 'paging: 1. Не передавать. 2. Передать в другом формате (текстом) 3. Передать пустой массив'
+    pre-conditions:
+      - action: |-
+          Тело запроса 
+
+          insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+          dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+          startDate = Дата начала периода (обязательный)
+          endDate = Дата окончания периода (обязательный)
+          attachReqStatus = Статус заявления на прикрепление(не обязательный)
+          paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+          page = 0
+          pageSize = 10)
+        expected_result: ''
+    tags: []
+
+  - case_id: 30894014-0ddf-45c7-9676-d7eb21ff83d7
+    title: "АС2. Проверка формирования ошибки при передачи неккоректных параметров\_paging"
+    description: |-
+      Тело запроса 
+
+      insuredPersonId = ИД персоны в АИС ОМС (обязательный)
+      dateApplyReg = Период даты регистрации заявления о прикреплении (не обязательный)
+      startDate = Дата начала периода (обязательный)
+      endDate = Дата окончания периода (обязательный)
+      attachReqStatus = Статус заявления на прикрепление(не обязательный)
+      paging = Параметры пагинации (не обязательный, если элемент не указан, то применяются параметры предустановленные по умолчанию:
+      page = 0
+      pageSize = 10)
+
+      параметр restQuery.maxPageSize = 10
+    priority: high
+    steps:
+      - action: |-
+          Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery/
+          передать в параметре pading = 
+        expected_result: Ожидаемый результат
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: '2.4'
+          - name: result
+            value: 'Система возвращает ответ с кодом 400 InvalidParameterPageSize Указано некорректное значение для параметра pageSize: {0}. Значение параметра должно быть целым и иметь значение, не более чем {1}.'
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: '-3'
+          - name: result
+            value: 'Система возвращает ответ с кодом  400 InvalidParameterPage Указано некорректное значение для параметра page: {0}. Значение параметра должно быть целым и иметь значение, не менее 0.'
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: корректно значение, но startDate > endDate
+          - name: result
+            value: 'Система возвращает ответ с кодом 400 InvalidParameterDateApplyReg Указано некорректное сочетание значений параметров startDate: {0} и endDate: {1}. Дата начала периода должна быть меньше или равна дате окончания периода.'
+
+  - case_id: 8e151ea1-1f75-4040-8a87-e326ce90c904
+    title: АС4. Проверка формирования непрдевиденной ошибки
+    description: Описание
+    priority: high
+    steps:
+      - action: Вызвать метод  POST /api/v1/AttachmentRequest/GetAttachmentRequestsQuery и инициировать обрыв связи с бд
+        expected_result: |-
+          Система возвращает ответ с кодом 500
+          Алгоритм завершен

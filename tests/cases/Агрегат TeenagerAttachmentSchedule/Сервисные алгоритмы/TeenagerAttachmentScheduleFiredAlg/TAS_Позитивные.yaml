@@ -1,0 +1,425 @@
+suite_id: f7800b41-c1ab-4a9e-bb20-376d77891a1f
+suite_name: TAS_Позитивные
+description: Описание
+created_at: '2026-01-08T09:50:45Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: f27fe66c-5441-4460-bc36-55314a84ca31
+    title: 1-2. Проверка запуска поиска истекших прикреплений ЗЛ, достигших совершеннолетия. Первый запуск
+    description: Описание
+    priority: high
+    steps:
+      - action: 'Дождаться интервал времени teenagerAttachmentScheduleFired.run.controlTimeInterval '
+        expected_result: |-
+          Система фиксирует начало работы, т.е. создает новую запись:
+
+          srv.run_control.code = 'TASF' (процесс поиска прикреплений ЗЛ, достигших совершеннолетия);
+          srv.run_control.host = хост, запустивший команду;
+          srv.run_control.start_date = current_timestamp;
+          srv.run_control.end_date = null;
+          srv.run_control.is_running = 1 (статус запуска процесса - запущен);
+          srv.run_control.last_date = current_timestamp.
+    pre-conditions:
+      - action: |-
+          Выполнены условия
+          1) teenagerAttachmentScheduleFired.run.mode = 1
+          2) текущее время >= teenagerAttachmentScheduleFired.run.beginTime
+          3) текущее время <= teenagerAttachmentScheduleFired.run.endTime
+          4) В таблице SRV.RUN_CONTROL нет записи с SRV.RUN_CONTROL.CODE = 'TASF'
+        expected_result: '- '
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Выполняется первый запуск (в svr.run_control нет записей)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Выполняется не первый запуск (в svr.run_control запись с SRV.RUN_CONTROL.CODE = 'TASF'  И current_timestamp - SRV.RUN_CONTROL.START_DATE >= teenagerAttachmentScheduleFired.run.startInterval)
+
+  - case_id: 5277b85c-909b-4784-a65f-aeb3e9213295
+    title: 1-2. Проверка запуска поиска истекших прикреплений ЗЛ, достигших совершеннолетия. Не первый запуск
+    description: Описание
+    priority: high
+    steps:
+      - action: 'Дождаться интервал времени teenagerAttachmentScheduleFired.run.controlTimeInterval '
+        expected_result: '-'
+      - action: |-
+          Прошел необходимый интервал времени с предыдущего запуска, 
+          т.е. current_timestamp - SRV.RUN_CONTROL.START_DATE >= значение системного параметра teenagerAttachmentScheduleFired.run.startInterval
+
+          где (через И):
+          SRV.RUN_CONTROL.CODE = 'TASF' 
+          SRV.RUN_CONTROL.START_DATE не пусто (процесс ранее запускался)
+        expected_result: '-'
+      - action: |-
+          Найдена запись
+          srv.run_control.code = 'TASF',
+          srv.run_control.is_running = 0
+        expected_result: |-
+          Система обновляет эту запись:
+
+          srv.run_control.start_date = current_timestamp;
+          srv.run_control.end_date = null;
+          srv.run_control.is_running = 1 (статус запуска процесса - запущен);
+          srv.run_control.host = хост, запустивший команду;
+          srv.run_control.last_date = current_timestamp,
+    pre-conditions:
+      - action: |
+          Выполнены условия
+          1) teenagerAttachmentScheduleFired.run.mode = 1
+          2) текущее время >= teenagerAttachmentScheduleFired.run.beginTime
+          3) текущее время <= teenagerAttachmentScheduleFired.run.endTime
+        expected_result: '- '
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Выполняется первый запуск (в svr.run_control нет записей)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Выполняется не первый запуск (в svr.run_control запись с SRV.RUN_CONTROL.CODE = 'TASF'  И current_timestamp - SRV.RUN_CONTROL.START_DATE >= teenagerAttachmentScheduleFired.run.startInterval)
+
+  - case_id: d4bdb1c6-d1ce-4809-98b0-c5066546f55c
+    title: 1-2. Проверка запуска поиска истекших прикреплений ЗЛ, достигших совершеннолетия. Команда зависла
+    description: Описание
+    priority: high
+    steps:
+      - action: 'Дождаться интервал времени teenagerAttachmentScheduleFired.run.controlTimeInterval '
+        expected_result: '-'
+      - action: |-
+          Прошел необходимый интервал времени с предыдущего запуска, 
+          т.е. current_timestamp - SRV.RUN_CONTROL.START_DATE >= значение системного параметра teenagerAttachmentScheduleFired.run.startInterval
+
+          для записи, где (через И):
+          SRV.RUN_CONTROL.CODE = 'TASF' 
+          SRV.RUN_CONTROL.START_DATE не пусто (процесс ранее запускался)
+        expected_result: '-'
+      - action: |-
+          Обнаружена зависшая запись в svr.run_control
+          srv.run_control.last_date < текущие дата/время - teenagerAttachmentScheduleFired.run.resetPeriod
+          srv.run_control.code = 'TASF'
+        expected_result: |-
+          Система обновляет эту запись:
+
+          srv.run_control.start_date = current_timestamp;
+          srv.run_control.end_date = null;
+          srv.run_control.is_running = 1 (статус запуска процесса - запущен);
+          srv.run_control.host = хост, запустивший команду;
+          srv.run_control.last_date = current_timestamp,
+    pre-conditions:
+      - action: |-
+          Выполнены условия
+          1) teenagerAttachmentScheduleFired.run.mode = 1
+          2) текущее время >= teenagerAttachmentScheduleFired.run.beginTime
+          3) текущее время <= teenagerAttachmentScheduleFired.run.endTime
+        expected_result: '- '
+      - action: |-
+          Выполнены условия
+          1) current_timestamp - SRV.RUN_CONTROL.START_DATE >= значение системного параметра teenagerAttachmentScheduleFired.run.startInterval
+          если в таблице SRV.RUN_CONTROL есть запись, где (через И):
+          SRV.RUN_CONTROL.CODE = 'TASF' (процесс поиска прикреплений ЗЛ, достигших совершеннолетия)
+          SRV.RUN_CONTROL.START_DATE не пусто (процесс ранее запускался)
+        expected_result: '-'
+      - action: |-
+          Нет записи, для которой выполняются условия (через И):
+          1) svr.run_control.is_running= 1;
+          2) с момента последнего изменения, выполненного командой, прошло меньше времени, чем указано в значении системного параметра "Количество времени, по истечении которого считается, что процесс поиска прикреплений ЗЛ, достигших совершеннолетия "завис"
+          (srv.run_control.last_date >= current_timestamp минус teenagerAttachmentScheduleFired.run.resetPeriod);
+          3) код процесса соответствует процессу поиска истекших прикреплений ЗЛ, достигших совершеннолетия (srv.run_control.code = 'TASF').
+        expected_result: '-'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Выполняется первый запуск (в svr.run_control нет записей)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Выполняется не первый запуск (в svr.run_control запись с SRV.RUN_CONTROL.CODE = 'TASF'  И current_timestamp - SRV.RUN_CONTROL.START_DATE >= teenagerAttachmentScheduleFired.run.startInterval)
+
+  - case_id: d0c52acc-2662-4270-a7d6-79c0dc6f9b4b
+    title: "3. Проверка фиксации поиска\_ расписания прикреплений ЗЛ, достигших совершеннолетия. Запись зависла(1)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Найдена зависшая запись 
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process = 1;
+        expected_result: |-
+          1) Система сбрасывает зависшую запись
+
+          date_end = current_timestamp
+          status = 3
+          error = формируется ошибка с кодом AT_TASF_003
+          change_date = current_timestamp
+
+          2) Система переходит к поиску новых записей, требующих обработки.
+
+  - case_id: ab887818-83ce-4db7-8b8c-d11927cfc6f3
+    title: "3. Проверка фиксации поиска\_ расписания прикреплений ЗЛ, достигших совершеннолетия. Необработанная запись(0)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Найдена запись, требующая обработки
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process = 0; (обновить/создать руками)
+        expected_result: |-
+          1) Система обновляет запись в teenager_time_expired_attach_schedule
+
+          status = 1 (в работе)
+          date_start = current_timestamp
+          change_date = current_timestamp
+          2) Алгоритм продолжает выполнение
+
+  - case_id: 471e8c97-50fb-4308-805d-25f654817d8e
+    title: "3. Проверка фиксации поиска\_ расписания прикреплений ЗЛ, достигших совершеннолетия. Обработанная запись(2)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Найдена запись, требующая обработки
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process = 2;
+        expected_result: |+
+          Система фиксирует завершение работы процесса.
+
+          srv.run_control.end_date = current_timestamp;
+          srv.run_control.is_running = 0 (процесс не запущен),
+          srv.run_control.last_date = current_timestamp,
+
+
+
+
+
+  - case_id: 928a0cb5-ca59-462a-bd25-a2ac71630bdf
+    title: "3. Проверка фиксации поиска\_ расписания прикреплений ЗЛ, достигших совершеннолетия. Запись не найдена"
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Не найдена запись
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process not in (0,1,2);
+
+        expected_result: "Система создаёт новую запись в attach.teenager_time_expired_attach_schedule\n\nid = авто\ndate_process = текущая дата без времени\nstatus_process = 1\ndate_start = current_timestamp\nattach_count_found = 0\nattach_count_error  = 0\nattach_count_close = 0\nattach_count_update = 0\ncreate_date = current_timestamp\nchangeDate\tchange_date\tcurrent_timestamp"
+
+  - case_id: 7d416598-78af-42f9-a5b9-59a6381a99dc
+    title: "3. Проверка фиксации поиска\_ расписания прикреплений ЗЛ, достигших совершеннолетия. Есть запись с ошибкой (3)"
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Найдена запись
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process = 3 ;
+
+          Нет записей 
+          1) дата ожидаемого запуска teenager_time_expired_attach_schedule.date_process = текущей дате;
+          2) статус процесса teenager_time_expired_attach_schedule.status_process in (0,1,2) ;
+
+        expected_result: "Система создаёт новую запись в attach.teenager_time_expired_attach_schedule\n\nid = авто\ndate_process = текущая дата без времени\nstatus_process = 1\ndate_start = current_timestamp\nattach_count_found = 0\nattach_count_error  = 0\nattach_count_close = 0\nattach_count_update = 0\ncreate_date = current_timestamp\nchangeDate\tchange_date\tcurrent_timestamp"
+
+  - case_id: b3f6616e-e6d3-4a9c-8a8e-b2f689ce716f
+    title: "4. Проверка\_заполнения обязательных\_ параметров"
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          Заполнены обязательные параметры:
+
+          В config значение teenagerAttachmentScheduleFired.attachСloseСode есть в ref.attach_close.code
+          В config значение teenagerAttachmentScheduleFired.periodAfterBirthday заполнено целым числом
+          В config значение teenagerAttachmentScheduleFired.attachTypeCode есть в ref.attach_type.code
+          В config заполнен teenagerAttachmentScheduleFired.moAgeCategoryCodeChildren
+          В config заполнен teenagerAttachmentScheduleFired.moAgeCategoryCodeMix
+        expected_result: |
+          Переход на след. шаг
+    iterations: []
+
+  - case_id: 7648d52d-3bc3-493e-9925-ef9603edcaee
+    title: "5. 0 Проверка формирования события\_TeenagerAttachmentScheduleFiredEvent для поиска\_истекших прикреплений и вызов GetNotTeenagerExpiredAttachmentQuery"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Сформировано событие TeenagerAttachmentScheduleFiredEvent с параметрами:
+
+          1) eventName = TeenagerAttachmentScheduleFiredEvent;
+          2) attachTypeCode = значение параметра "Тип прикрепления для поиска" teenagerAttachmentScheduleFired.attachTypeCode;
+          3) periodAfterBirthday = значение параметра "Период действия прикрепления после совершеннолетия" teenagerAttachmentScheduleFired.periodAfterBirthday;
+          4) moAgeCategoryCodeChildren = значение параметра "Код для детской возрастной категории МО" teenagerAttachmentScheduleFired.moAgeCategoryCodeChildren;
+          5) moAgeCategoryCodeMix = значение параметра "Код для смешанной возрастной категории МО" teenagerAttachmentScheduleFired.moAgeCategoryCodeMix;
+          6) dateProcess = текущая дата;
+          7) maxCountRows = значение параметра "Максимальное количество строк, возвращаемых запросом поиска" teenagerAttachmentScheduleFired.queryMaxCountRows. Если параметр не заполнен или значение не соответствует типу integer, то передается maxCountRows =100.
+        expected_result: Запускается команда GetNotTeenagerExpiredAttachmentQuery
+
+  - case_id: 694788a9-bd5e-40eb-b89a-b4561278a7fc
+    title: "5. 1 Проверка выполнения GetNotTeenagerExpiredAttachmentQuery. Не найдено прикреплений\_ для обновления"
+    description: Описание
+    priority: high
+    steps:
+      - action: GetNotTeenagerExpiredAttachmentQuery вернуло 0  прикреплений для обновления
+        expected_result: |-
+          Система фиксирует завершение работы команды.
+
+          Для обновленной/созданной записи в attach.teenager_time_expired_attach_schedule выполняется обновление
+
+          date_end = current_timestamp
+          status_process = 2
+          change_date = current_timestamp
+    pre-conditions:
+      - action: 'Сформировано событие TeenagerAttachmentScheduleFiredEvent '
+        expected_result: Результат предусловия
+
+  - case_id: dba7dbff-18ee-4f9e-8f89-d079404d9c77
+    title: "5. 2 Проверка выполнения GetNotTeenagerExpiredAttachmentQuery. Найдены прикрепления\_ для обновления"
+    description: Описание
+    priority: high
+    steps:
+      - action: GetNotTeenagerExpiredAttachmentQuery вернуло прикреплений для обновления > 0
+        expected_result: |
+          1) Для обновленной/созданной записи в attach.teenager_time_expired_attach_schedule выполняется обновление
+
+          attach_count_found = attach.teenager_time_expired_attach_schedule.attach_count_found + количество записей, найденных в запросе
+          change_date = current_timestamp
+
+          2) Обновляется запись в таблице svr.run_control
+          srv.run_control.last_date = current_timestamp, где svr.run_control.code = 'TASF' и сsvr.run_control.is_running = 1
+    pre-conditions:
+      - action: 'Сформировано событие TeenagerAttachmentScheduleFiredEvent '
+        expected_result: Результат предусловия
+
+  - case_id: 643461f8-e1c7-40f4-8de8-34eb3fdbc568
+    title: "6.1-4 Проверка закрытия\_прикрепление ЗЛ, достигшего совершеннолетия, к детской МО"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Сформировано событие TeenagerAttachmentClosingEvent - Найдено прикрепление ЗЛ, достигшего совершеннолетия, к детскому участку, которое необходимо закрыть с параметрами
+
+          1) eventName = TeenagerAttachmentClosingEvent
+          2) attachId = attachment.id
+          3) attachСloseСode = значение сис. параметра teenagerAttachmentScheduleFired.attachСloseСode
+          4) если <param1>, то <param2>
+        expected_result: |
+          Система:
+          1) Инициирует закрытие прикрепления InsideClosingAttachmentCommand 
+          2) Сохраняет результат обработки в srv.teenager_attach_change_log
+          3) Обновляет запись в attach.teenager_time_expired_attach_schedule
+          attach_count_close = attach_count_close + 1
+          change_date = current_timestamp
+          4) Обновляет запись в srv.run_control, где svr.run_control.code = 'TASF' и svr.run_control.is_running = 1.
+    pre-conditions:
+      - action: |-
+          Прикрепление имеет детскую возрастную категорию МО (ref.mo_mgfoms_core) 
+          moAgeСategory = ref.mo_mgfoms_core.age_category, где ref.mo_mgfoms_core.code_vsi = attach.attachment.ref_mo_mgfoms_core_code_vsi_mo
+        expected_result: '-'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param1
+            value: teenagerAttachmentScheduleFired.closeOnCurrentDate=1
+          - name: param2
+            value: dateEnd = текущая дата
+      - iteration_id: '2'
+        params:
+          - name: param1
+            value: teenagerAttachmentScheduleFired.closeOnCurrentDate=0
+          - name: param2
+            value: dateEnd = attach.person_info.birth_date + "количество лет" в srv.teenager_area_type_change.years_count (где srv.teenager_area_type_change.ref_ratype_code_teenager = attach.attachment.ref_ratype_code)  + "количество дней" в значении параметра "Период действия прикрепления после совершеннолетия" (teenagerAttachmentScheduleFired.periodAfterBirthday) минус 1 день.
+      - iteration_id: '3'
+        params:
+          - name: param1
+            value: teenagerAttachmentScheduleFired.closeOnCurrentDate не заполнен
+          - name: param2
+            value: dateEnd = attach.person_info.birth_date + "количество лет" в srv.teenager_area_type_change.years_count (где srv.teenager_area_type_change.ref_ratype_code_teenager = attach.attachment.ref_ratype_code)  + "количество дней" в значении параметра "Период действия прикрепления после совершеннолетия" (teenagerAttachmentScheduleFired.periodAfterBirthday) минус 1 день.
+
+
+  - case_id: 37cd48fa-2e60-4204-8425-99c971001de1
+    title: "6.1-4 Проверка обновления прикрепления ЗЛ, достигшего совершеннолетия,\_к смешанной МО"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          Сформировано событие TeenagerAttachmentUpdateEvent - Найдено прикрепление ЗЛ, достигшего совершеннолетия, к детскому участку, которое необходимо обновить с параметрами:
+
+          1) eventName = TeenagerAttachmentUpdateEvent
+          2) attachId = attachment.id
+          3) areaTypeCode = srv.teenager_area_type_change.ref_ratype_code_adult, где srv.teenager_area_type_change.ref_ratype_code_teenager = attach.attachment.ref_ratype_code
+        expected_result: |
+          Система:
+          1) Инициирует обновление прикрепления UpdateAttachmentCommand
+          2) Сохраняет результат обработки в srv.teenager_attach_change_log 
+          3) Обновляет запись в attach.teenager_time_expired_attach_schedule
+          attach_count_update = attach_count_update + 1
+          change_date = current_timestamp
+          4) Обновляет запись в srv.run_control, где svr.run_control.code = 'TASF' и svr.run_control.is_running = 1.
+    pre-conditions:
+      - action: |-
+          Прикрепление имеет смешанную возрастную категорию МО (ref.mo_mgfoms_core) 
+          moAgeСategory = ref.mo_mgfoms_core.age_category, где ref.mo_mgfoms_core.code_vsi = attach.attachment.ref_mo_mgfoms_core_code_vsi_mo
+        expected_result: '-'
+    iterations: []
+
+  - case_id: febb9a66-5bc6-4ac2-80d8-268f287e16a6
+    title: 6.5 Проверка продолжения работы после изменения прикрепления. Приложение остановлено
+    description: Описание
+    priority: high
+    steps:
+      - action: |
+          1) Запустить алгоритм 
+          2) Остановить Приложение
+        expected_result: "1) Система фиксирует завершение работы команды.\n\ndate_end = current_timestamp\nstatus_process\t= 3\neerror\t= AT_TASF_005\nchange_date = current_timestamp\n\n2) Система фиксирует завершение работы процесса.\n\nsrv.run_control.end_date = current_timestamp;\nsrv.run_control.is_running = 0 (процесс не запущен),\nsrv.run_control.last_date = current_timestamp,\n\nгде svr.run_control.code = 'TASF' и svr.run_control.is_running = 1"
+    iterations: []
+    pre-conditions: []
+
+  - case_id: e31aaeaf-9848-4234-8afc-500fd02562f1
+    title: 6.5 Проверка продолжения работы после изменения прикрепления. Прикрепление не последнее в текущей итерации
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Разрешено продолжить работу
+
+          teenagerAttachmentScheduleFired.run.mode = 1
+          текущее время >= teenagerAttachmentScheduleFired.run.beginTime
+          текущее время <= teenagerAttachmentScheduleFired.run.endTime
+
+
+        expected_result: Система переходит к обработке следующего прикрепления
+    iterations: []
+    pre-conditions:
+      - action: Обработано непоследнее прикрепление в списке (GetNotTeenagerExpiredAttachmentQuery)
+        expected_result: Результат предусловия
+
+  - case_id: a34acd2a-ef8c-44b5-bf81-2ae90168fc70
+    title: 6.5 Проверка продолжения работы после изменения прикрепления. Прикрепление последнее в текущей итерации
+    description: Описание
+    priority: high
+    steps:
+      - action: |+
+          Разрешено продолжить работу
+
+          teenagerAttachmentScheduleFired.run.mode = 1
+          текущее время >= teenagerAttachmentScheduleFired.run.beginTime
+          текущее время <= teenagerAttachmentScheduleFired.run.endTime
+
+
+        expected_result: Система инициирует новый поиск истекших прикреплений(шаг 5)
+    iterations: []
+    pre-conditions:
+      - action: Изменено последнее прикрепление в списке (GetNotTeenagerExpiredAttachmentQuery)
+        expected_result: '-'
+
+  - case_id: 2bd78781-f37c-475c-b6d0-430fce011503
+    title: 7-8 Проврека завешения работы процесса и команды
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

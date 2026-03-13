@@ -1,0 +1,812 @@
+suite_id: 58aa9d37-7fb1-4aa6-821c-645b41906705
+suite_name: Позитивные проверки алгоритма поиска и закрытия истекших прикреплений
+created_at: '2025-12-11T16:44:34Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: b2929f76-fa6d-4bfe-b3f6-1662c24d4d9c
+    title: 1. Проверка возможности запуска алгоритма при изменении значений параметров
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Установить значение параметра <param> = <value>.
+          Запустить проверку условий запуска процесса поиска истекших прикреплений.
+        expected_result: |
+          Алгоритм запущен успешно.
+          Появилась новая запись или обновилась в svr.run_control
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.mode
+          - name: value
+            value: 1 (Режим работы включен)
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.beginTime
+          - name: value
+            value: Текущее время (10:00:00) > timeExpiredAttachmentScheduleFiredAlg.run.beginTime (8:00:00)
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.beginTime
+          - name: value
+            value: 'Текущее время (08:00:00) = timeExpiredAttachmentScheduleFiredAlg.run.beginTime (08:00:00) '
+      - iteration_id: '4'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.endTime
+          - name: value
+            value: Текущее время (17:00:00) < timeExpiredAttachmentScheduleFiredAlg.run.endTime (20:00:00)
+      - iteration_id: '5'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.endTime
+          - name: value
+            value: 'Текущее время (20:00:00) = timeExpiredAttachmentScheduleFiredAlg.run.endTime (20:00:00) '
+      - iteration_id: '6'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.startInterval
+          - name: value
+            value: |-
+              В svr.run_control есть запись с code='TEAS' и start_date не пусто.
+              current_timestamp - svr.run_control.start_date (20 часов) >= timeExpiredAttachmentScheduleFiredAlg.run.startInterval (18 часов)
+      - iteration_id: '7'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.startInterval
+          - name: value
+            value: В svr.run_control нет записи с code='TEAS' (первый запуск).Условие интервала считается выполненным.
+      - iteration_id: '8'
+        params:
+          - name: param
+            value: timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod
+          - name: value
+            value: В svr.run_control нет записи, где выполняются условия (через И):is_running = 1И last_date >= current_timestamp - timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod (30 минут)И code = 'TEAS'
+    pre-conditions:
+      - action: |-
+          В srv.config установлены базовые параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 00:01:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 23:59:00
+          timeExpiredAttachmentScheduleFiredAlg.run.startInterval = 18
+          timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod = 30
+          timeExpiredAttachmentScheduleFiredAlg.run.controlTimeInterval = значение для частоты проверки
+          Текущее время находится в рабочем диапазоне.
+        expected_result: ''
+
+  - case_id: f6d7e8f9-a0b1-4c2d-be3f-4a5b6c7d8e9f
+    title: 2.1. Создание новой записи в svr.run_control (первый запуск)
+    description: ''
+    priority: medium
+    steps:
+      - action: Запустить алгоритм
+        expected_result: |-
+          Система создаёт новую запись в таблице svr.run_control
+          svr.run_control.code = 'TEAS' (процесс поиска истекших прикреплений)
+          svr.run_control.host = хост, запустивший команду
+          svr.run_control.start_date = current_timestamp
+          svr.run_control.end_date = null
+          svr.run_control.is_running = 1 (статус запуска процесса - запущен)
+          svr.run_control.last_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Условия из сценария 1 соблюдены
+          В таблице svr.run_control нет записи с code = 'TEAS'
+        expected_result: ''
+
+  - case_id: d4b5c6d7-e8f9-4a0b-9c1d-2e3f4a5b6c7d
+    title: 2.2. Обновление существующей записи в svr.run_control (is_running = 0)
+    description: ''
+    priority: medium
+    steps:
+      - action: Запустить алгоритм.
+        expected_result: |-
+          Система обновляет существующую запись в таблице svr.run_control:
+          svr.run_control.start_date = current_timestamp
+          svr.run_control.end_date = null
+          svr.run_control.is_running = 1 (статус запуска процесса - запущен)
+          svr.run_control.host = хост, запустивший команду
+          svr.run_control.last_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Условия из сценария 1 соблюдены
+          В svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 0
+          start_date не пусто
+        expected_result: ''
+
+  - case_id: e5c6d7e8-f9a0-4b1c-ad2e-3f4a5b6c7d8e
+    title: 2.2. Обновление зависшей записи в svr.run_control (is_running = 1, процесс завис)
+    description: ''
+    priority: medium
+    steps:
+      - action: Запустить алгоритм
+        expected_result: |
+          Система выполняет поиск записи в svr.run_control по условиям:
+          code = 'TEAS'
+          is_running = 1 (процесс запущен)
+          last_date < current_timestamp - timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod
+          (процесс завис)
+      - action: Проверить результат фиксации начала работы в таблице svr.run_control
+        expected_result: |-
+          Система обновляет существующую запись (зависший процесс):
+          svr.run_control.start_date = current_timestamp
+          svr.run_control.end_date = null
+          svr.run_control.is_running = 1 (статус запуска процесса - запущен)
+          svr.run_control.host = хост, запустивший команду (новый хост)
+          svr.run_control.last_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Условия из сценария 1 соблюдены
+          В svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 1
+          last_date < current_timestamp - timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod
+        expected_result: ''
+
+  - case_id: a7e8f9a0-b1c2-4d3e-8f4a-5b6c7d8e9f0a
+    title: 3.1. Проверка сброса зависшей записи в attach.time_expired_attach_schedule
+    description: ''
+    priority: medium
+    steps:
+      - action: Выполнить запуск алгоритма
+        expected_result: |
+          Система сбрасывает зависшую запись:
+          attach.time_expired_attach_schedule.date_end = current_timestamp
+          attach.time_expired_attach_schedule.change_date = current_timestamp
+          attach.time_expired_attach_schedule.error = "Обработка зависла" формируется ошибка с кодом AT_TEAS_003
+          attach.time_expired_attach_schedule.status = 3
+      - action: Проверить сброс зависшей записи в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          Система сбрасывает зависшую запись:
+          attach.time_expired_attach_schedule.date_end = current_timestamp
+          attach.time_expired_attach_schedule.change_date = current_timestamp
+          attach.time_expired_attach_schedule.error = "Обработка зависла" формируется ошибка с кодом AT_TEAS_003
+          attach.time_expired_attach_schedule.status = 3
+
+          сценарий продолжает работу
+    pre-conditions:
+      - action: |-
+          Сценрий 2 выполнен успешно.
+          В таблице attach.time_expired_attach_schedule существует запись:
+          date_process = текущая дата
+          status = 1 (в работе) (зависшая)
+          С момента последнего изменения прошло больше времени, чем указано в timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod.
+        expected_result: ''
+
+  - case_id: b8f9a0b1-c2d3-4e4f-90a5-6c7d8e9f0a1b
+    title: 3.2. Проверка обновления существующей записи с status = 0 в attach.time_expired_attach_schedule
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм
+          Сценарий 2 пройден.
+          Проверить обновление найденной записи в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          Система обновляет найденную запись:
+          status = 1 (Статус процесса поиска и закрытия истекших прикреплений - в работе)
+          date_start = current_timestamp
+          change_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          В таблице attach.time_expired_attach_schedule существует запись:
+          date_process = текущая дата
+          status = 0 (новый)
+        expected_result: ''
+
+  - case_id: c9a0b1c2-d3e4-4f5a-81b6-7d8e9f0a1b2c
+    title: 3.2.2.1 Проверка создания новой записи в attach.time_expired_attach_schedule при отсутствии записей.
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм
+        expected_result: |
+          Система выполняет поиск записей по условиям:
+          date_process = текущей дате
+          status in (0, 1, 2)
+      - action: Проверить создание новой записи в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          Система создаёт новую запись:
+          id = Авто
+          date_process = текущая дата
+          date_start = current_timestamp
+          status = 1 (Статус процесса поиска и закрытия истекших прикреплений - в работе)
+          attach_count_found = 0
+          attach_count_close = 0
+          attach_count_error = 0
+          create_date = current_timestamp
+          change_date = current_timestamp
+    pre-conditions:
+      - action: |
+          Шаг 3.1 выполнен.
+          В таблице attach.time_expired_attach_schedule:
+          - Нет записей с date_process = текущая дата и status = 0 (новый)
+          - Нет записей с date_process = текущая дата и status in (1, 2)
+        expected_result: ''
+
+  - case_id: e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b
+    title: 3.2.2.2 Проверка перехода к завершению работы при наличии записи со status = 2 в attach.time_expired_attach_schedule
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: |-
+          Сценарий 2 выполнен успешно.
+          Сценарий 3.1 выполнен (зависших записей не найдено или они сброшены).
+      - action: Проверить результат поиска записи со status = 0
+        expected_result: |
+          Запись со status = 0 не найдена.
+      - action: Проверить результат поиска записи со status = 2
+        expected_result: |
+          Найдена запись со status = 2 (выполнен успешно).
+          Процесс уже выполнялся и был выполнен успешно.
+    pre-conditions:
+      - action: |-
+          Сценарий 2 выполнен успешно.
+          Сценарий 3.1 выполнен (зависших записей не найдено или они сброшены).
+          В таблице attach.time_expired_attach_schedule:
+          - Нет записей с date_process = текущая дата и status = 0 (новый)
+          - Есть запись с date_process = текущая дата и status = 2 (выполнен успешно)
+        expected_result: ''
+
+  - case_id: f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c
+    title: 4. Проверка заполнения обязательных полей для выполнения команды параметров GetTimeExpiredAttachmentQuery
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Создать/изменить данные в базе данных:
+          <value>
+        expected_result: Успешно созданы.
+      - action: |-
+          Запустить алгоритм.
+          Проверить выполнение проверки заполнения обязательных параметров
+          с использованием данных, созданных/измененных в базе данных согласно итерации
+        expected_result: |-
+          Алгоритм корректно работает с созданными/измененными данными
+          и продолжает выполнение сценария
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: |-
+              Создана запись в справочнике ref.attach_type со своим кодом:
+              code = 5
+              (другие обязательные поля заполнены согласно структуре таблицы)
+              В справочнике ref.attach_close существует запись:
+              code = 1
+              В srv.config установлены параметры:
+              timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 5
+              timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 120
+              timeExpiredAttachmentScheduleFiredAlg.attachCloseCode = 1
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: |-
+              В справочнике ref.attach_type существует запись:
+              code = 2
+              В справочнике ref.attach_close существует запись:
+              code = 1
+              В srv.config изменен параметр:
+              timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 365
+              (остальные параметры установлены как в итерации 1)
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: |-
+              В справочнике ref.attach_type существует запись:
+              code = 2
+              Создана запись в справочнике ref.attach_close со своим кодом:
+              code = 2
+              (другие обязательные поля заполнены согласно структуре таблицы)
+              В srv.config установлен параметр:
+              timeExpiredAttachmentScheduleFiredAlg.attachCloseCode = 2
+              (остальные параметры установлены как в итерации 1)
+    pre-conditions:
+      - action: |-
+          Сценарий 2 выполнен успешно.
+          Сценарий 3 выполнен успешно (запись в attach.time_expired_attach_schedule создана/обновлена со status = 1).
+        expected_result: ''
+
+  - case_id: a3b4c5d6-e7f8-4a9b-8c0d-1e2f3a4b5c6d
+    title: 5.1. Проверка поиска истекших прикреплений с найденными результатами
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          для вызова GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение системного параметра (Тип прикрепления для поиска)
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows или 100 (если параметр не заполнен или значение не соответствует типу integer)
+      - action: |-
+          Проверить результат выполнения GetTimeExpiredAttachmentQuery
+          и обновление записей в таблице attach.time_expired_attach_schedule
+        expected_result: |
+          В таблице attach.time_expired_attach_schedule обновлена запись:
+          attach_count_found = attach.time_expired_attach_schedule.attach_count_found + количество записей найденных в запросе.
+          change_date = current_timestamp
+      - action: Проверить обновление записи даты и времени в svr.run_control.
+        expected_result: |-
+          В таблице svr.run_control обновлена запись:
+          svr.run_control.code = 'TEAS'
+          svr.run_control.is_running = 1
+          svr.run_control.last_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно.
+          В таблице attach.attachment существуют прикрепления с истекшим сроком действия.
+          В srv.config установлен параметр:
+          timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows = значение (или не заполнен)
+        expected_result: ''
+
+  - case_id: b4c5d6e7-f8a9-4b0c-9d1e-2f3a4b5c6d7e
+    title: 5.2. Проверка завершения работы при отсутствии истекших прикреплений
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          для вызова GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение системного параметра timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows или 100
+      - action: |-
+          Проверить результат выполнения GetTimeExpiredAttachmentQuery
+          при отсутствии истекших прикреплений
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение системного параметра timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows
+      - action: Проверить переход к завершению работы
+        expected_result: |-
+          Система переходит к завершению работы (шаг 7).
+          Обработка прикреплений НЕ выполняется.
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно.
+          В таблице attach.attachment НЕТ прикреплений с истекшим сроком действия.
+        expected_result: ''
+
+  - case_id: c5d6e7f8-a9b0-4c1d-9e2f-3a4b5c6d7e8f
+    title: 5.3. Проверка передачи значения maxCountRows = 100 при невалидном параметре timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: Сценарий 4 выполнен успешно (проверка обязательных параметров пройдена).
+      - action: |-
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          с параметром maxCountRows при невалидном значении timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows.
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение системного параметра (Тип прикрепления для поиска)
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = 100
+          (параметр timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows <value>)
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: не заполнен (параметр отсутствует в srv.config)
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: не соответствует типу integer (например, значение = 'abc' или '12.5')
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно.
+          В таблице attach.attachment существуют прикрепления с истекшим сроком действия.
+          В srv.config параметр timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows =  <value>
+        expected_result: ''
+
+  - case_id: 4eba311e-2637-48e4-99fc-ac6f3a1e677f
+    title: 5.4. Проверка поиска истекших прикреплений с измененным параметром timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Создать/изменить данные в базе данных:
+          <value>
+        expected_result: Успешно созданы.
+      - action: |-
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          с измененным параметром attachTypeCode
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение из srv.config (используется измененное значение)
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows или 100
+      - action: |-
+          Запустить алгоритм. 
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          с измененным параметром attachTypeCode
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение из srv.config (используется измененное значение)
+          dateProcess = текущая дата
+          expirationPeriod = значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: |-
+              В справочнике ref.attach_type создана/существует запись:
+              code = 5
+              (другие обязательные поля заполнены согласно структуре таблицы)
+              В srv.config изменен параметр:
+              timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 5
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: В справочнике ref.attach_type создана/существует запись:code = 3(другие обязательные поля заполнены согласно структуре таблицы)В srv.config изменен параметр:timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 3
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно.
+          В таблице attach.attachment существуют прикрепления с истекшим сроком действия
+          для различных типов прикреплений.
+        expected_result: ''
+
+  - case_id: d6e7f8a9-b0c1-4d2e-9f3a-4b5c6d7e8f9a
+    title: 5.5. Проверка поиска истекших прикреплений с измененным параметром timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Изменить параметр в srv.config:
+          <value>
+        expected_result: Параметр успешно изменен.
+      - action: |-
+          Запустить алгоритм
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          с измененным параметром timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent с параметрами:
+          eventName = TimeExpiredAttachmentScheduleFiredEvent
+          attachTypeCode = значение системного параметра (Тип прикрепления для поиска)
+          timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+          dateProcess = текущая дата
+          expirationPeriod = значение из srv.config (используется измененное значение)
+          maxCountRows = значение параметра timeExpiredAttachmentScheduleFiredAlg.queryMaxCountRows
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: В srv.config изменен параметр:timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 180
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: В srv.config изменен параметр:timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = 730
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно.
+          В таблице attach.attachment существуют прикрепления с истекшим сроком действия
+          для различных периодов действия.
+        expected_result: ''
+
+  - case_id: e7f8a9b0-c1d2-4e3f-9a4b-5c6d7e8f9a0b
+    title: 6.1.1. Проверка определения даты закрытия при незаполненной date_end у прикрепления и timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+      - action: |-
+          Проверить определение даты закрытия прикрепления в attach.attachment
+          для прикрепления с незаполненной date_end
+        expected_result: |-
+          Система определяет дату закрытия прикрепления (dateEnd):
+          Для прикрепления с незаполненной date_end:
+          Если timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1 (закрывать текущей датой),
+          то dateEnd = текущая дата
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно.
+          В таблице attach.attachment существует прикрепление:
+          date_end = null (не заполнена)
+          date_begin заполнена
+          В srv.config установлен параметр:
+          timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1
+        expected_result: ''
+
+  - case_id: f8a9b0c1-d2e3-4f4a-9b5c-6d7e8f9a0b1c
+    title: 6.1.2. Проверка определения даты закрытия при незаполненной date_end и timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 или не заполнен
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+      - action: |-
+          Проверить определение даты закрытия прикрепления (dateEnd)
+          для прикрепления с незаполненной date_end
+        expected_result: |-
+          Система определяет дату закрытия прикрепления (dateEnd):
+          Для прикрепления с незаполненной date_end:
+          Если timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 (закрывать расчётной датой)
+          или параметр не заполнен,
+          то dateEnd = attach.attachment.date_begin + значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod - 1 день
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно.
+          В таблице attach.attachment существует прикрепление:
+          date_end = null (не заполнена)
+          date_begin заполнена
+          В srv.config установлен параметр:
+          timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 (или параметр не заполнен)
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = значение (например, 10)
+        expected_result: ''
+
+  - case_id: a9b0c1d2-e3f4-4a5b-9c6d-7e8f9a0b1c2d
+    title: 6.1.3. Проверка определения даты закрытия при заполненной date_end и timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 или не заполнен
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+      - action: |-
+          Проверить определение даты закрытия прикрепления (dateEnd)
+          для прикрепления с заполненной date_end
+        expected_result: |-
+          Система определяет дату закрытия прикрепления:
+          Для прикрепления с заполненной date_end:
+          Если timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 (закрывать расчётной датой)
+          или параметр не заполнен,
+          то dateEnd = min(attach.attachment.date_end, attach.attachment.date_begin + значение параметра timeExpiredAttachmentScheduleFiredAlg.expirationPeriod - 1 день)
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно.
+          В таблице attach.attachment существует прикрепление:
+          date_end заполнена
+          date_begin заполнена
+          В srv.config установлен параметр:
+          timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 0 (или параметр не заполнен)
+          timeExpiredAttachmentScheduleFiredAlg.expirationPeriod = значение (например, 10)
+        expected_result: ''
+
+  - case_id: b0c1d2e3-f4a5-4b6c-9d7e-8f9a0b1c2d3e
+    title: 6.1.4. Проверка определения даты закрытия при заполненной date_end и timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+      - action: |-
+          Проверить определение даты закрытия прикрепления (dateEnd)
+          для прикрепления с заполненной date_end
+        expected_result: |-
+          Система определяет дату закрытия прикрепления (dateEnd):
+          Для прикрепления с заполненной date_end:
+          Если timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1 (закрыть текущей датой),
+          то dateEnd = текущая дата
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно.
+          В таблице attach.attachment существует прикрепление:
+          date_end заполнена
+          date_begin заполнена
+          В srv.config установлен параметр:
+          timeExpiredAttachmentScheduleFiredAlg.closeOnCurrentDate = 1
+        expected_result: ''
+
+  - case_id: c1d2e3f4-a5b6-4c7d-9e8f-9a0b1c2d3e4f
+    title: 6.2-6.3. Проверка закрытия истекшего прикрепления и сохранения результата
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+          Сценарий 6.1 выполнен (дата закрытия определена).
+      - action: |-
+          Проверить формирование события TimeExpiredAttachmentProcessedEvent
+          для вызова InsideClosingAttachmentCommand
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentProcessedEvent с параметрами:
+          eventName = TimeExpiredAttachmentProcessedEvent
+          attachId = attachment.id
+          attachCloseCode = значение параметра timeExpiredAttachmentScheduleFiredAlg.attachCloseCode
+          dateEnd = дата закрытия прикрепления, определенная на шаге 6.1
+      - action: Проверить сохранение результата обработки в таблице srv.closed_expired_attach_log
+        expected_result: |-
+          Система сохраняет результат обработки истекшего прикрепления в таблице srv.closed_expired_attach_log:
+          id = Авто
+          attachment_id = attachment.id
+          attach_close_code = значение параметра timeExpiredAttachmentScheduleFiredAlg.attachCloseCode
+          attach_close_date = dateEnd определенная на шаге 6.1
+          message_id = messageId, если получен в ответе InsideClosingAttachmentCommand
+          error = ошибка, полученная в ответе InsideClosingAttachmentCommand или на шаге 6.2, если есть
+          create_date = current_timestamp
+          change_date = current_timestamp
+      - action: Проверить выполнение шагов 6.2-6.3 в одной транзакции
+        expected_result: |-
+          Шаги 6.2-6.3 выполняются в одной транзакции.
+          Если на шаге 6.2-6.3 возникнет непредвиденная ошибка,
+          то Система откатывает транзакцию и переходит к следующему пункту 6.4 (обработка следующего прикрепления).
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно.
+          Сценарий 6.1 выполнен (дата закрытия определена).
+          В таблице attach.attachment существует прикрепление с истекшим сроком действия.
+          InsideClosingAttachmentCommand выполняется успешно и возвращает messageId.
+        expected_result: ''
+
+  - case_id: d2e3f4a5-b6c7-4d8e-9f0a-1b2c3d4e5f6a
+    title: 6.4.1. Проверка обновления записи в attach.time_expired_attach_schedule после успешного закрытия прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: Сценарий 6.2-6.3 выполнен успешно (прикрепление закрыто успешно).
+      - action: |-
+          Проверить обновление записи
+          в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          attach_count_close = attach.time_expired_attach_schedule.attach_count_close + 1
+          change_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Сценарий 6.2-6.3 выполнен успешно (закрытие прикрепления выполнено успешно).
+          В таблице attach.time_expired_attach_schedule существует запись,
+          созданная/обновленная на шаге 3.
+        expected_result: ''
+
+  - case_id: a5b6c7d8-e9f0-4a1b-9c2d-3e4f5a6b7c8d
+    title: 6.4.2. Проверка обновления last_date в svr.run_control после успешного закрытия прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: Запустить алгоритм.
+        expected_result: Сценарий 6.2-6.3 выполнен успешно (прикрепление закрыто успешно).
+      - action: |-
+          Проверить обновление даты/времени последнего изменения
+          в таблице svr.run_control
+        expected_result: |-
+          В таблице svr.run_control обновлена запись:
+          svr.run_control.code = 'TEAS'
+          svr.run_control.is_running = 1
+          svr.run_control.last_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Сценарий 6.2-6.3 выполнен успешно (закрытие прикрепления выполнено успешно).
+          В таблице svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 1
+        expected_result: ''
+
+  - case_id: e3f4a5b6-c7d8-4e9f-9a1b-2c3d4e5f6a7b
+    title: 6.5.1. Проверка продолжения работы и перехода к следующему прикреплению
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: 'Сценарий 6.4.1 и 6.4.2 выполнены успешно '
+      - action: Проверить результат проверки и переход к следующему прикреплению
+        expected_result: |-
+          Все условия для продолжения работы выполнены.
+          Система переходит к обработке следующего прикрепления (шаг 6 повторяется).
+      - action: Проверить переход к следующему прикреплению
+        expected_result: Система переходит к обработке следующего прикрепления, шаг 6 повторяется
+    pre-conditions:
+      - action: |-
+          Сценарий 6.4.1 выполнен успешно.
+          Сценарий 6.4.2 выполнен успешно.
+          В списке найденных прикреплений есть еще прикрепления для обработки.
+          Приложение не остановлено.
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 00:01:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 23:59:00
+          Текущее время находится в рабочем диапазоне.
+        expected_result: ''
+
+  - case_id: f4a5b6c7-d8e9-4f0a-9b2c-3d4e5f6a7b8c
+    title: 6.5.2. Проверка перехода к шагу 5 при последнем прикреплении в списке
+    description: ''
+    priority: medium
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: |
+          Сценарий 6.4.1 и 6.4.2 выполнен успешно
+      - action: Проверить переход к шагу 5 при последнем прикреплении
+        expected_result: Система переходит к шагу 5 (повторный поиск истекших прикреплений). Если прикрепление не найдено, завершение работы.
+    pre-conditions:
+      - action: |
+          Сценарий 6.4.1 выполнен успешно.
+          Сценарий 6.4.2 выполнен успешно.
+          В списке найденных прикреплений обрабатывается последнее прикрепление.
+          Приложение не остановлено.
+        expected_result: ''
+
+  - case_id: b6c7d8e9-f0a1-4b2c-9d3e-4f5a6b7c8d9e
+    title: 7. Проверка фиксации завершения работы команды InsideClosingAttachmentCommand
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм.
+          Все предыдущие шаги выполнены успешно (обработка прикреплений завершена).
+        expected_result: Все предыдущие шаги выполнены успешно
+      - action: |-
+          Проверить фиксацию завершения работы команды
+          в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          В таблице attach.time_expired_attach_schedule обновлена запись,
+          созданная на шаге 3:
+          date_end = current_timestamp
+          status = 2 (выполнено успешно)
+          error = null 
+          change_date = current_timestamp
+    pre-conditions:
+      - action: |-
+          Все предыдущие шаги алгоритма выполнены успешно:
+          - Сценарий 5 выполнен (найдены истекшие прикрепления)
+          - Сценарий 6 выполнен (обработка прикреплений завершена успешно)
+          - Ошибок на шагах 4, 5 не было
+          - На шаге 6.5 все условия для продолжения работы были выполнены
+          В таблице attach.time_expired_attach_schedule существует запись,
+          созданная/обновленная на шаге 3.
+        expected_result: ''
+
+  - case_id: c7d8e9f0-a1b2-4c3d-9e4f-5a6b7c8d9e0f
+    title: 8. Проверка фиксации завершения работы процесса
+    description: ''
+    priority: high
+    steps:
+      - action: |
+          Запустить алгоритм.
+        expected_result: Сценарий 7 выполнен успешно (завершение работы команды зафиксировано).
+      - action: |-
+          Проверить фиксацию завершения работы процесса
+          в таблице svr.run_control
+        expected_result: |-
+          В таблице svr.run_control обновлена запись:
+          svr.run_control.code = 'TEAS'
+          svr.run_control.is_running = 0 (процесс не запущен)
+          svr.run_control.end_date = current_timestamp
+          svr.run_control.last_date = current_timestamp
+
+          Алгоритм завершен
+    pre-conditions:
+      - action: |-
+          Сценарий 7 выполнен успешно.
+          В таблице svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 1 (процесс запущен)
+        expected_result: ''

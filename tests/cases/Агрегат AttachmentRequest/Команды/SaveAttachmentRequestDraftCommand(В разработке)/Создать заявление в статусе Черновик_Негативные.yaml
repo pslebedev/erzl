@@ -1,0 +1,356 @@
+suite_id: 5734dfc5-3f51-464c-b5d9-175b34e750b0
+suite_name: Создать заявление в статусе Черновик_Негативные
+description: Описание
+created_at: '2026-01-14T13:42:32Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 5ce12ccc-cc16-4df9-9356-5569e213e8a1
+    title: "AC.1 Проверка формирования ошибки при отсутствии\_обязательных параметров или некорректном типе и формате параметров"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод SaveAttachmentRequestDraftCommand, 
+
+          1)передав на вход параметры, несоответствующие схеме
+          2)не передавая обязательные параметры
+
+          !! добавить параметризацию
+        expected_result: |-
+          Получена ошибка 400
+          InvalidRequestParameters Ошибка формата запроса: {0}.
+
+  - case_id: f78f4984-d6d6-4124-9dcf-ba3870f54920
+    title: "АС.2 Проверка формирования ошибки, если найдено\_идентичное неутвержденное заявления на прикрепление"
+    description: Описание
+    priority: high
+    steps:
+      - action: |-
+          1) Во входных параметрах не передан attachmentId
+          2) В БД у ЗЛ есть идентичное прикрепление
+
+          - attach.attachment.insured_person_id = PersonInfo (insuredPersonId) из входных параметров
+          - attach.attachment.ref_attach_status_code_request =  "Черновик" (arDraft) или "Заявление создано" (arCreated))
+          - attach.attachment.ref_ratype_profile_code = AttachmentRequestContent (profileCode) из входных параметров
+          - attach.attachment.ref_attach_type_code = AttachmentRequestContent (attachType) из входных параметров
+          - attach.attachment.ref_mo_mgfoms_core_code_vsi_mo = MoInfo(moCodeVsi) из входных параметров
+        expected_result: |-
+          Сформирована ошибка 409 
+          AttachmentRequestDouble Найдено идентичное неутвержденное заявления на прикрепление (id - {0}).
+
+  - case_id: 6124144f-f929-4cb4-b151-6aff63191893
+    title: AC.3 Проверка формирования ошибки, если передан несуществующий идентификатор заявления на прикрепление
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          1) Во входных параметрах передан attachmentId, существующий в БД идентификатор attach.attachment.id 
+          2) Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход несуществующий attachmentId
+        expected_result: |-
+          Получена ошибка 404
+          AttachmentRequestNotFound Заявление на прикрепление с id = {0} не найдено.
+    pre-conditions: []
+
+  - case_id: 10efde98-cdb4-4ae2-8358-4ed67fd84604
+    title: "AC.4 Проверка формирования ошибки, если найденное прикрепление\_ в статусе \"Просрочено\""
+    description: Описание
+    priority: medium
+    steps:
+      - action: |+
+          1) Во входных параметрах передан attachmentId, существующий в БД идентификатор attach.attachment.id 
+          2) Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход attachmentId, имеющий статус в БД  "Просрочено"(arExpired)
+
+        expected_result: |-
+          Получена ошибка 409
+          AttachmentRequestExpired Заявление на прикрепление с id = {0} в статусе {1} - нарушен срок работы с заявлением. Необходимо зарегистрировать новое заявление.
+    pre-conditions: []
+
+  - case_id: 553699fb-06cd-4357-956b-59012c6bf0be
+    title: AC.5 Проверка формирования ошибки, если найденное прикрепление в статусе "Черновик"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |+
+          1) Во входных параметрах передан attachmentId, существующий в БД идентификатор attach.attachment.id 
+          2) Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход attachmentId, имеющий статус в БД  "Черновик" (arDraft)
+
+        expected_result: |-
+          Получена ошибка 409
+          InvalidAttachReqStatus Статус заявления на прикрепление не позволяет выполнить действие: код статуса = {0} .
+    pre-conditions: []
+
+  - case_id: e099eebb-8df3-4d73-9de1-80f44c55e265
+    title: AC.6 Проверка формирования ошибки, если инициатору запроса недоступно создание/изменение заявления на прикрепление
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          1) Во входных параметрах передан attachmentId
+          2) Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход инициатора, которому недоступно создание/изменение заявления на прикрепление.
+          PickupPoint(pickupPointOrganization) = mo
+          PickupPoint(cоdeМО) != AttachmentRequestMo (moCodeVsi)
+        expected_result: |-
+          Получена ошибка 409
+          InvalidInitiator Инициатору запросу {0} недоступно изменение заявления на прикрепление к МО {1} .
+
+          {0}: cоdeМО - значение входного параметра
+
+          {1}: moCodeVsi - значение входного параметра
+    pre-conditions: []
+
+  - case_id: 175b9e4c-e6be-4e3f-af82-ac853ce4b5b2
+    title: AC.6 Проверка формирования ошибки, если инициатору запроса недоступно создание/изменение заявления на прикрепление
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          1) Во входных параметрах передан attachmentId
+          2) Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход инициатора, которому недоступно создание/изменение заявления на прикрепление.
+
+          В созданном ранее Черновике заявления на прикрепление (если выполняется редактирование) 
+          PickupPoint(pickupPointOrganization) = mo
+          AttachmentRequestMo (moCodeVsi) = attach.attachment.ref_mo_mgfoms_core_code_vsi_mo, где attach.attachment.id = attachmentId (при наличии в БД)
+        expected_result: |-
+          Получена ошибка 409
+          InvalidInitiator Инициатору запросу {0} недоступно изменение заявления на прикрепление к МО {1} .
+
+          {0}: cоdeМО - значение входного параметра
+
+          {1}: moCodeVsi - значение входного параметра
+    pre-conditions: []
+
+  - case_id: 9b16bf1e-51bd-4bf1-8706-79daa97c9ac6
+    title: AC.7 Проверка формирования ошибки, если для обязательного параметра передано неверное значение
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход некорректное значение (пустые атрибуты/пустые строки)
+
+          тип PersonInfo - параметры oip
+          тип DudlInfo - параметры dudlNum, issuer
+          тип PolicyInfo - параметр enp
+          тип LegalRepresentative - параметры legalRepresentativeId
+          тип AttachDoctorInfo - параметр areaNum.
+        expected_result: |-
+          Получена ошибка 400
+          InvalidAttachmentRequestParameters  Для обязательного параметра {0} передано неверное значение {1} (пустой атрибут или пустая строка)
+
+          {0}:attributeСode - входной параметр
+
+          {1}: attributeName - значение входного параметра
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 04b4a5b8-267a-47e0-ab08-959da31c9335
+    title: "AC.8 Проверка формирования ошибки, если не передан параметр\_ctznOksmCode"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход  
+          DudlInfo.noCitizenship = false
+          DudlInfo.ctznOksmCode не заполнено 
+        expected_result: |-
+          Получена ошибка 409
+          InvalidСtznOksmCode Не указан обязательный параметр ctznOksmCode 
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 968e7184-7bd1-4672-8bbd-5724c7c7a9b1
+    title: AC.9 Проверка формирования ошибки, если передано некорректное значение параметра ОИП
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход  
+          PersonInfo.oip > 12 символов
+
+          1) > 12 цифр
+          2) 12 цифр и букв
+          3) < 12 цифр
+          4) пробелы в начале, в середине, в конце
+        expected_result: |-
+          Получена ошибка 409
+          InvalidOip Некорректное значение параметра ОИП (oip = {0})
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 63ecc21c-8d25-4ce2-8d33-a1166f8420a7
+    title: AC.10 Проверка формирования ошибки, если значения  входных параметров не соответствуют значениям справочников
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход  
+          значение, отсутствующее в справочнике
+          !Параметризация
+        expected_result: |-
+          Получена ошибка 409
+          FlkAttachmentRequestDictionaryValuesError Переданное значение параметра {0} = {1} отсутствует в справочнике.
+
+          {0}: parameterName - наименование параметра
+          {1}: parameterValue - переданное значение параметра
+    pre-conditions: []
+    iterations: []
+
+  - case_id: dd36f4f2-fcf4-4bf7-a982-4571f47390eb
+    title: "АС.11 Проверка формирования ошибки при\_ некорректном значении параметра достоверности информации"
+    description: Описание
+    priority: medium
+    steps:
+      - action: Передано <param>
+        expected_result: Получена ошибка 409 InvalidDost Некорректное значение параметра достоверности информации (dost = {0})
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: PersonInfo.dost = 45___Содержит два значения из {4, 5, 6}
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: PersonInfo.dost = 456__Содержит все три значения из {4, 5, 6}
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: PersonInfo.dost = 445__Содержит два значения из {4, 5, 6}
+      - iteration_id: '4'
+        params:
+          - name: param
+            value: PersonInfo.dost = 123__Содержит три значения из {1, 2, 3}
+      - iteration_id: '5'
+        params:
+          - name: param
+            value: PersonInfo.dost = 112__Содержит три значения из {1, 2, 3}
+      - iteration_id: '6'
+        params:
+          - name: param
+            value: PersonInfo.dost = 4? __Не содержит значений из {1, 2, 3}
+      - iteration_id: '7'
+        params:
+          - name: param
+            value: PersonInfo.dost =1234 __Нарушает оба правила
+      - iteration_id: '8'
+        params:
+          - name: param
+            value: PersonInfo.dost =234 __Содержит запрещенную комбинацию 23 и значение 4
+      - iteration_id: '9'
+        params:
+          - name: param
+            value: PersonInfo.dost =7 __Содержит недопустимое число 7
+      - iteration_id: '10'
+        params:
+          - name: param
+            value: PersonInfo.dost =Null __Пустая строка
+      - iteration_id: '11'
+        params:
+          - name: param
+            value: PersonInfo.dost =1a2__Содержит недопустимые символы
+
+  - case_id: ccd72b69-08c9-4a2b-af56-c9ef8c0a8759
+    title: "AC.12 Проверка формирования ошибки, если не пройден алгоритм проверки возможности сохранения заявления на прикрепление\_CheckAttachmentRequestAlg"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |
+          Вызвать метод SaveAttachmentRequestDraftCommand, передав на вход  
+          значение
+          !Параметризация
+
+          - возраст застрахованного лица НЕ соответствует возрастной категории МО;
+          - возраста застрахованного лица НЕ соответствует типу участка;
+          - дата регистрации заявления отклоняется от текущей даты более, чем разрешенный период (разрешенный период определяется системными параметрами);
+          - профиль участка НЕ соответствует типу участка по справочнику (АИС ОМС 2.0) Справочник "Типы участков медицинской организации для учёта прикреплений"  (бизнес-код - OmsAreaType);
+          - тип финансирования НЕ соответствует типу прикрепления.
+        expected_result: |-
+          Получена ошибка 409
+
+          InvalidAttachReqAgeMo
+          InvalidAttachReqAgeArea
+          InvalidDateApplyReg
+          InvalidProfileAndAreaType
+          InvalidCapitationAndAttachType 
+
+          +  Групповая ошибка АggregatedBusinessException
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 7f93169d-e226-4d9a-a693-a7358a0b7f32
+    title: АС.13 Проверка формирования ошибки при некорректных данных о действующем прикреплении персоны
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          1) Во входных параметрах передан AttachmentRequest.attachmentLastActiveId =  действующему в БД прикреплению к МО 
+          2) Во входных параметрах передан AttachmentRequest.profileCode = код профиля участка, найденного в БД прикрепления 
+
+          ?нужно ли учитывать ИД ЗЛ
+        expected_result: |-
+          Сформирована ошибка 409 InvalidAttachmentLastActiveId 
+          Некорректные данные о действующем прикреплении персоны на дату регистрации заявления на прикрепление (attachmentLastActiveId = {0})
+
+  - case_id: b97ee729-5142-4b0a-8e60-772847fc7d7d
+    title: "АС.14\_\_Проверка формирования ошибки при отсутствии значения AttachmentRequestMo.moCodeVsi\_в справочнике\_ ref.mo_mgfoms_core"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          В справочнике не найдено значение  ref.mo_mgfoms_core.mo_code_f032, 
+
+          где 
+          ref.mo_mgfoms_core.code_vsi = AttachmentRequestMo  (moCodeVsi)
+          is_archive=false
+        expected_result: |-
+          Сформирована ошибка 409 FlkAttachmentRequestDictionaryEmptyMo 
+          "МО не имеет права передавать информацию для создания прикрепления (для переданного значения {0} отсутствует значение mo_code_f032 в справочнике)."
+
+  - case_id: c00763d3-9523-45a1-8643-bed0607be6c0
+    title: "АС.15\_Проверка формирования ошибки при отсутствии значения AttachmentRequestMo.moCodeVsi в справочнике\_ref.frmo_org"
+    description: Описание
+    priority: medium
+    steps:
+      - action: |-
+          В справочнике не найдено значение  ref.frmo_org.oid,
+          где
+          ref.frmo_org.lpu_id = AttachmentRequestMo (moCodeVsi)
+          is_archive=false
+        expected_result: |-
+          Получена ошибка 409 FlkAttachmentRequestDictionaryEmptyOid
+          "МО не имеет права передавать информацию для создания прикрепления (для переданного значения {0} отсутствует значение oid в справочнике)"
+
+  - case_id: 9afc67fa-7ee9-44be-ad4b-05a228862559
+    title: AC.16 Проверка формирования непредвиденной ошибки при предварительном создании/изменении заявления на прикрепление
+    description: Описание
+    priority: medium
+    steps:
+      - action: ''
+        expected_result: |-
+          Получена ошибка 500
+          TechnicalException
+    pre-conditions: []
+    iterations: []
+
+  - case_id: 9e0809a6-f741-4476-9bca-863cadcf9514
+    title: AC.16 Проверка формирования непредвиденной ошибки при  сохранение истории изменения заявления на прикрепление
+    description: Описание
+    priority: medium
+    steps:
+      - action: ''
+        expected_result: |-
+          Получена ошибка 500
+          TechnicalException
+    pre-conditions: []
+    iterations: []
+
+  - case_id: d15b0f06-1094-4b31-8559-f7b298c1059d
+    title: "AC.16 Проверка формирования непредвиденной ошибки при  формировании события\_\_ AttachmentRequestDraftSavedEvent"
+    description: Описание
+    priority: medium
+    steps:
+      - action: ''
+        expected_result: |-
+          Получена ошибка 500
+          TechnicalException
+    pre-conditions: []
+    iterations: []

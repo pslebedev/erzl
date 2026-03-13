@@ -1,0 +1,107 @@
+suite_id: 65c8fb46-8edb-4ade-9ddf-721f9d56f701
+suite_name: Подтвердить аннулирование прикрепления по данным ФЕРЗЛ. Позитивные
+description: Команда предназначена для обработки событий, содержащих сведения об успешном аннулировании (закрытии) прикрепления в ФЕРЗЛ Событие поступает в сообщении FerzlAttachmentClosedResultEvent из топика AttachmentRequestCommandTopic
+created_at: '2025-12-18T07:45:32Z'
+status: new
+created_by: p.lebedev
+test_cases:
+  - case_id: b7a10404-c640-4293-afe0-b732906420b5
+    title: Проверка аннулирования прикрепления в БД для события FerzlAttachmentClosedResultEvent
+    description: 'Проверка выплнения обновления сведений о прикреплениив таблице attachment '
+    priority: high
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentRequestCommandTopic со сведениями о подтверждении об аннулировании прикрепления '
+        expected_result: |
+          Система выполняет обновление сведений прикрепления в таблице attachment (Прикрепление):
+          attachment.id = data/attachmentResult/ferzlResponseAttach/attachStatus
+          ref_attach_status_ferzl_code = data/attachmentResult/ferzlResponseAttach/attachStatus
+          ref_attach_status_code_attach = A_CLOSED
+          ferzl_transferred = 2
+          is_active = 0
+          change_date = current_timestamp
+          attach_change_date = current_timestamp
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING
+  - case_id: be73fd9a-4747-462b-96ef-d57943265fb8
+    title: Проверка сохранения истории в БД при аннулировании прикрепления для события FerzlAttachmentClosedResultEvent
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: Система сохраняет историю изменения прикрепления, выполненного на предыдущем шаге, в таблицу attachment_history (Изменения прикреплений)
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING
+  - case_id: 860cbd6c-4af6-4f08-ac85-fc78cbc788bd
+    title: Проверка формирования сообщение для публикации события FerzlAttachmentClosedResultEvent о аннулирования прикрепления
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: |-
+          Система формирует сообщение для публикации события AttachmentCanceledEvent - Прикрепление аннулировано.
+
+          При формировании сообщения указывается:
+
+          eventName = AttachmentCancelledEvent 
+          operationType = CANCELLED
+          attachId = ИД прикрепления, найденного на шаге 2
+      - action: Перейти в таблицу srv.attach_event_topic_send
+        expected_result: Система добавляет сведения для отправки сообщения в таблицу srv.attach_event_topic_send - Сведения для отправки в топик AttachmentEventTopic
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING
+  - case_id: bc86888a-70df-430d-892d-6bccdc6cd1d5
+    title: "Проверка отправки сообщения в топик\_AttachmentEventTopic"
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: Система выполняет обновление сведений прикрепления в таблице attachment (Прикрепление)
+      - action: Перейти в таблицу srv.attach_event_topic_send_log
+        expected_result: |-
+          Система переносит сведения в таблицу srv.attach_event_topic_send_log (Отправленные в топик AttachmentEventTopic сведения)
+
+          (строка в srv.attach_event_topic_send удаляется, в srv.attach_event_topic_send_log вставляется идентичная)
+      - action: |-
+          Перейти в топик AttachmentEventTopic
+          По ключу message_id записи в srv.attach_event_topic_send_log найти сообщение в топике 
+        expected_result: Сообщение в топике отображается
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING
+  - case_id: 9cbe85b7-9d81-454a-982a-4027c7286811
+    title: "Проверка сохранения сведений в таблицу\_\_srv.attach_request_command_topic_receive_log"
+    description: ''
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentRequestCommandTopic со сведениями о подтверждении об аннулировании прикрепления '
+        expected_result: Система сохраняет сведения в таблицу srv.attach_request_command_topic_receive_log
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING
+  - case_id: a1b2c3d4-5e6f-4a5b-8c9d-0e1f2a3b4c5d
+    title: Проверка обрезания полей descr, dsource, dsourceType до 255 символов при сохранении в БД
+    description: При получении события FerzlAttachmentClosedResultEvent значения полей descr, dsource, dsourceType, превышающие длину поля в БД (255 символов), должны обрезаться до 255 символов при обновлении записи в таблице attachment.
+    priority: medium
+    steps:
+      - action: 'Отправить сообщение в топик AttachmentRequestCommandTopic со сведениями о подтверждении аннулирования прикрепления, в котором поля descr, dsource, dsourceType содержат значения длиной более 255 символов '
+        expected_result: |-
+          Система выполняет обновление сведений прикрепления в таблице attachment.
+          Значения полей descr, dsource, dsourceType обрезаются до 255 символов и сохраняются в БД (длина поля в БД — 255 символов).
+    pre-conditions:
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о созданиии прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CREATING
+      - action: 'Отправить сообщение в топик AttachmentExternalSyncCommandTopic со сведениями о аннулировании прикрепления '
+        expected_result: В бд создана запись о прикреплении со статусом A_CANCELING

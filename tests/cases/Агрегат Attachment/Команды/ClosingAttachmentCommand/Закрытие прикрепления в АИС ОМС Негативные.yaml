@@ -1,0 +1,22 @@
+suite_id: a641d024-9c18-4bb8-b1f8-34eb7281d066
+suite_name: Негативные
+description: ""
+created_at: "2025-10-17T13:22:05.909Z"
+status: new
+created_by: ""
+test_cases:
+  
+  
+  - case_id: f2e2b067-574d-471c-8fac-87e351da5aa8
+    title: АС. Проверка получения ошибки, если в БД не найдено закрываемое прикрепление
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent с несуществующим в БД прикреплением
+        expected_result: Система формирует ошибку с кодом "AT_CLAC_001 - Прикрепление с attachExtId = {0} не найдено"
+
+  - case_id: 3958fff0-25e0-4f0b-81ab-8bc13749aa67
+    title: АС. Проверка получения ошибки, если закрываемое прикрепление в БД недействующее 
+    priority: medium
+    steps:
+      - action: Отправить в топик AttachmentExternalSyncCommandTopic событие ExternalAttachmentClosedEvent с несуществующим в БД прикреплением
+        expected_result: Система формирует ошибку с кодом "AT_CLAC_002 - Прикрепление с attachExtId = {0} является недействующим"

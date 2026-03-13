@@ -1,0 +1,50 @@
+suite_id: ecaa9f93-e721-49f3-bfe5-52ebc43c8b8c
+suite_name: Название test suite
+description: Описание
+created_at: '2026-02-13T11:45:48Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: d02805be-d429-4c2c-aed5-c57a532b34d9
+    title: АС.1 Проверка формирования ошибки при заполнении некорректных данных
+    description: Описание
+    priority: high
+    steps:
+      - action: "Отправить метод GET\t/api/v1/AttachmentRequest/GetAttachmentRequestQuery/{attachmentId}\nгде {attachmentId} = <value>"
+        expected_result: 'Система возвращает ответ с кодом 400 и кодом ошибки InvalidRequestParameters Ошибка формата запроса: {0}.'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: передать id буквами
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: передать отрицательное число (-42)
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: передать символами
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: 'не передавать '
+
+  - case_id: 17c3bac3-3821-4c2b-97af-57ee0b4ebf91
+    title: АС.2 Проверка формирования ошибки при заполнении невалидного attachmentID
+    description: Описание
+    priority: high
+    steps:
+      - action: "Отправить метод GET\t/api/v1/AttachmentRequest/GetAttachmentRequestQuery/{attachmentId}\nгде {attachmentId} = несуществующий ид"
+        expected_result: Ожидаемый результат
+    iterations:
+      - iteration_id: '2'
+        params: []
+
+  - case_id: 5038aff1-e8b8-4cf7-8cc2-526a1b18ac07
+    title: АС.3 Проверка формирования непрдевиденной ошибки
+    description: Описание
+    priority: high
+    steps:
+      - action: "Отправить метод GET\t/api/v1/AttachmentRequest/GetAttachmentRequestQuery/{attachmentId}\nгде {attachmentId}\nИнициировать невозможность получения доступ к БД"
+        expected_result: Система возвращает ответ с кодом 500

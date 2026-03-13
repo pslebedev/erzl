@@ -1,0 +1,63 @@
+suite_id: bd903c56-38f9-43b3-896a-a4ec4daee3a0
+suite_name: Алгоритм получения и обработки сообщений из топика AttachmentRequestCommandTopic. Позитивные
+created_at: "2025-12-22T08:37:47Z"
+status: new
+created_by: p.lebedev
+test_cases:
+  - case_id: ebf2baa1-b143-4b91-a460-fceb85b0eacd
+    title: "Проверка получения события из топика AttachmentRequestCommandTopic"
+    priority: high
+    steps:
+    - action: Выключить планировщик
+    - action: Сформировать и отправить сообщение <eventName> при <ref_attach_status_code_attach> в Kafka в топик AttachmentRequestCommandTopic
+    - action: Включить планировщик
+      expected_result: Система сохранила сведения в таблицу srv.attach_request_command_topic_receive_log
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CANCELLING"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CREATING"
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CLOSING"
+
+  - case_id: 5c7c02a9-801a-472e-8791-15c14f44338a
+    title: "Проверка получения события из топика AttachmentRequestCommandTopic при наличии поля, несуществующего в схеме json"
+    priority: medium
+    steps:
+    - action: Выключить планировщик
+    - action: Сформировать и отправить сообщение <eventName> при <ref_attach_status_code_attach> в Kafka в топик AttachmentRequestCommandTopic с дополнительным полем, отсутствующим в json-схеме
+    - action: Включить планировщик
+      expected_result: Сообщение распарсено. Система сохранила сведения в таблицу srv.attach_request_command_topic_receive_log
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CANCELLING"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CREATING"
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: ref_attach_status_code_attach  
+        value: "CLOSING"
+  
+  

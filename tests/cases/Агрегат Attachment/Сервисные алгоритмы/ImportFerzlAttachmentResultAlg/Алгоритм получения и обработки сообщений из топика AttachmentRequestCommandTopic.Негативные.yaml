@@ -1,0 +1,844 @@
+suite_id: 7fb87965-e565-4aae-9c0d-587770920a72
+suite_name: Алгоритм получения и обработки сообщений из топика AttachmentRequestCommandTopic. Негативные
+description: "Проверка обработки сообщений с некорректным форматом или не прошедших форматно-логический контроль"
+created_at: "2025-12-22T08:38:44Z"
+status: new
+created_by: p.lebedev
+test_cases:
+  - case_id: 86f5266c-fd86-48d8-9cd5-d948332072aa
+    title: "Обработка сообщения с пустым ключом или телом"
+    description: "Проверка ошибки AT_IFAR_012 при пустом ключе сообщения или пустом теле"
+    priority: high
+    pre-conditions:
+      - action: "В системе существует прикрепление"
+    steps:
+      - action: "Отправить сообщение в топик AttachmentRequestCommandTopic с пустым ключом"
+        expected_result: "Сообщение успешно доставлено в топик"
+      - action: "Проверить логирование ошибки "
+        expected_result: "Найдена запись с status = 6 и error, содержащей текст ошибки \"AT_IFAR_012 Не указан ключ сообщения или текст сообщения пустой: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>.\""
+  
+  - case_id: 751ef757-510c-424c-80c3-18c923105e9a
+    title: "Обработка сообщения с невалидным JSON"
+    description: "Проверка ошибки AT_IFAR_001 при некорректном синтаксисе JSON"
+    priority: high
+    pre-conditions:
+      - action: "В системе существует прикрепление с известным attach_ext_id"
+    steps:
+      - action: "Отправить сообщение в топик AttachmentRequestCommandTopic с невалидным JSON в теле (например, {data: \"test\")"
+        expected_result: "Сообщение успешно доставлено в топик"     
+      - action: "Проверить наличие записей c message_key отправленного сообщения  в srv.attach_request_command_topic_receive_log"
+        expected_result: "Найдена запись с status = 0 и error, содержащей текст ошибки \"AT_IFAR_001: Не удалось распарсить сообщение: топик = AttachmentRequestCommandTopic, ИД сообщения = ...\""     
+
+  - case_id: 78558c25-8105-4366-9473-26893ca32e89
+    title: "Проверка полученного сообщения из Kafka на заполнение обязательных параметров"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic в сообщении <param>"
+      expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_002 ФЛК не пройден. Некорректный формат сообщения: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано eventName"  
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано metadata"  
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано metadata/apiVersion"
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано metadata/systemCode"
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано metadata/timestamp"         
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data"         
+    - iteration_id: '7'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/messageId"    
+    - iteration_id: '8'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/operationDate"         
+    - iteration_id: '9'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/operationType"         
+    - iteration_id: '10'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult"    
+    - iteration_id: '11'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/requestMessageId"                              
+    - iteration_id: '12'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/attachId"  
+    - iteration_id: '13'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/insuredPersonId"
+    - iteration_id: '14'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/result"  
+    - iteration_id: '15'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано eventName"  
+    - iteration_id: '16'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано metadata"  
+    - iteration_id: '17'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано metadata/apiVersion"
+    - iteration_id: '18'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано metadata/systemCode"
+    - iteration_id: '19'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано metadata/timestamp"         
+    - iteration_id: '20'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data"         
+    - iteration_id: '21 '
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/messageId"    
+    - iteration_id: '22'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/operationDate"      
+    - iteration_id: '23'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/operationType"         
+    - iteration_id: '24'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult"    
+    - iteration_id: '25'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/requestMessageId"                              
+    - iteration_id: '26'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/attachId"  
+    - iteration_id: '27'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/insuredPersonId"  
+    - iteration_id: '28'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/result"  
+
+
+  - case_id: 4d84d25d-87c5-4cd8-b5f5-f6fa1a16ed3e
+    title: "Проверка полученного сообщения из Kafka на соответствие типу и формату данных"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic в сообщении <param>"
+      expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_002 ФЛК не пройден. Некорректный формат сообщения: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных eventName"  
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура metadata"  
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/apiVersion"
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/systemCode"
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/timestamp"         
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура data"         
+    - iteration_id: '7'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных/messageId"    
+    - iteration_id: '8'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/operationDate"      
+    - iteration_id: '9'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/operationType"         
+    - iteration_id: '10'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура data/attachmentResult"    
+    - iteration_id: '11'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/requestMessageId"                              
+    - iteration_id: '12'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/attachId"  
+    - iteration_id: '13'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/insuredPersonId"  
+    - iteration_id: '14'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/result" 
+    - iteration_id: '15'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных eventName"  
+    - iteration_id: '16'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура metadata"  
+    - iteration_id: '17'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/apiVersion"
+    - iteration_id: '18'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/systemCode"
+    - iteration_id: '19'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных metadata/timestamp"         
+    - iteration_id: '20'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура data"         
+    - iteration_id: '21'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных/messageId"    
+    - iteration_id: '22'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/operationDate"      
+    - iteration_id: '23'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/operationType"         
+    - iteration_id: '24'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "пустая структура data/attachmentResult"    
+    - iteration_id: '25'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/requestMessageId"                              
+    - iteration_id: '26'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/attachId"  
+    - iteration_id: '27'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/insuredPersonId"  
+    - iteration_id: '28'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "некорректный тип данных data/attachmentResult/result" 
+
+  
+
+  - case_id: d424d421-0944-4b53-a51d-73507fdfe50e
+    title: "Проверка полученного сообщения из Kafka на заполнение обязательных параметров в структуре FerzlResponseAttach"
+    priority: medium
+    steps:
+    - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic в сообщении <param>"
+      expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_002 ФЛК не пройден. Некорректный формат сообщения: топик = <имя топика>, ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach при result = 1"  
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/enp при result = 1"  
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/dateBegin при result = 1"  
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/attachMethodCode при result = 1" 
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/moOid при result = 1" 
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/moCode при result = 1" 
+    - iteration_id: '7'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/capitation при result = 1" 
+    - iteration_id: '8'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/attachStatus при result = 1" 
+    - iteration_id: '9'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/dsource при result = 1"
+    - iteration_id: '10'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/dsourceType при result = 1"
+    - iteration_id: '11'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "не передано data/attachmentResult/ferzlResponseAttach/moOkato при result = 1"
+
+  - case_id: 8b9fea19-618d-48e9-bcc5-b6b4eddb5dac
+    title: Проверка получения ошибки при превышении длины переданных значений
+    description: Описание
+    priority: low
+    steps:
+    - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic , в сообщении <param>"
+      expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_004 ФЛК не пройден. Длина переданного значения <наименование атрибута> превышает размер соответствующего поля БД. ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "key  сообщения превышает 1000 символов "  
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "Message_id из заголовка превышает 101 символ"  
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/operationType превышает 100 символов"  
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/requestMessageId превышает 36 символов" 
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/result превышает 32767"
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/ferzlResponseDateTime не приводится к timestamp (пример:\"2025-10-15T10:15:30+03:00_EXTRA_TEXT\") "
+    - iteration_id: '7'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/attachId превышает 36 символов"
+    - iteration_id: '8'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/ferzlResponseAttach/attachStatus превышает 3 символа" 
+    - iteration_id: '9'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: "data/attachmentResult/insuredPersonId превышает 36 символов" 
+
+  - case_id: 9d53c42a-2ee6-4016-9d06-6f2bc1368502
+    title: Проверка соответствию справочнику значений переданных параметров
+    description: "Проверка ошибки AT_IFAR_003 при передаче недопустимого значения <param>"
+    priority: low
+    steps:
+      - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic  с параметром <param> со значением <value>"
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_003 ФЛК не пройден. Переданное значение параметра <наименование атрибута> = <значение атрибута> не входит в список разрешенных: <перечень разрешенных значений>. ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: operationType  
+      - name: "value" 
+        value: INVALID_TYPE
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: result   
+      - name: "value" 
+        value: "3"
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: result   
+      - name: "value" 
+        value: "-3"
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: result   
+      - name: "value" 
+        value: ""
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: operationType  
+      - name: "value" 
+        value: "1" 
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: result   
+      - name: "value" 
+        value: INVALID_TYPE
+
+
+  - case_id: ef45b41f-7551-4a8e-9efa-33617005d149
+    title: Проверка ошибки при некорректных значениях operationType 
+    description: "Проверка ошибки AT_IFAR_003 при передаче недопустимого значения operationType"
+    priority: low
+    tags:
+      - Уточнить ОР
+    steps:
+      - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic  с параметром operationType со значением <value>"
+        expected_result: "???Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_003 ФЛК не пройден. Переданное значение параметра <наименование атрибута> = <значение атрибута> не входит в список разрешенных: <перечень разрешенных значений>. ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: "value" 
+        value: CLOSED 
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: "value" 
+        value: CREATED 
+  
+  - case_id: 38c31664-623d-47ef-a6e8-5824424dd34d
+    title: Логическая проверка на наличие параметров при определенном значении  result 
+    description: "Проверка ошибки AT_IFAR_005 при некорректном сочетании полей"
+    priority: high
+    steps:
+      - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic  с параметром result  со значением <value> и отсутствием <param>"
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_005 ФЛК не пройден. Передано некорректное сочетание полей. ИД сообщения = <ИД сообщения (message_id)>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: ferzlResponseDateTime   
+      - name: "value" 
+        value: "7"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: ferzlResponseAttach   
+      - name: "value" 
+        value: "1"
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: ferzlResponseDateTime   
+      - name: "value" 
+        value: "10"
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: ferzlResponseAttach   
+      - name: "value" 
+        value: "1"
+  
+  - case_id: 361bcbfb-8761-4e18-b797-4098b45d874c
+    title: Проверка наличия значения переданного в  attachStatus в справочнике 
+    description: Описание
+    priority: medium
+    pre-conditions:
+      - action: "настроена проверка статуса ФЕРЗЛ, т.е. attachmentRequestCommandTopic.import.checkFerzlAttachStatus = 1"        
+    steps:
+      - action: "Отправить сообщение <eventName> в топик  AttachmentRequestCommandTopic  с параметром data.attachmentResult.ferzlResponseAttach.attachStatus = \"UNKNOWN_STATUS\""
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_006: Переданное значение data.attachmentResult.ferzlResponseAttach.attachStatus отсутствует в справочнике.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+
+  - case_id: 3a4b5c6d-7e8f-4a0b-9c2d-3e4f5a6b7c8d
+    title: "Проверка ошибки отсутствия записи об отправке для requestMessageId"
+    description: "Проверка ошибки AT_IFAR_007 при отсутствии записи в attach_request_command_topic_receive_log"
+    priority: medium
+    steps:
+      - action: "Отправить сообщение <eventName> в топик AttachmentRequestCommandTopic с data.attachmentResult.requestMessageId = \"NON_EXISTENT_UUID\""
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_007 Запись об отправке сообщения с идентификатором <ИД отправленного сообщения (requestMessageId)> не найдена.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"   
+      
+  - case_id: 23f97b34-5d00-4d42-af87-eb0cb46a384b
+    title: "Проверка ошибки несоответствия attachId в сообщении и записи об отправке"
+    description: "Проверка ошибки AT_IFAR_008 при несовпадении идентификатора прикрепления"
+    priority: medium
+    steps:
+      - action: "Отправить сообщение <eventName> в топик AttachmentRequestCommandTopic с data.attachmentResult.requestMessageId = srv.attach_event_topic_send_log.message_id и data.attachmentResult.attachId != srv.attach_event_topic_send_log.attachment_id"
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_008 Полученный идентификатор прикрепления <полученный ИД прикрепления> не соответствует отправленному <отправленный ИД прикрепления>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"   
+
+  - case_id: 267127a6-4073-4349-9136-05e0a69ebfc5
+    title: "Проверка ошибки несоответствия insuredPersonId в сообщении и записи об отправке"
+    description: "Проверка ошибки AT_IFAR_009 при несовпадении идентификатора ЗЛ"
+    priority: medium
+    steps:
+      - action: "Отправить сообщение <eventName> в топик AttachmentRequestCommandTopic с data.attachmentResult.requestMessageId = srv.attach_event_topic_send_log.message_id и data.attachmentResult.insuredPersonId != srv.attach_event_topic_send_log.insured_person_id "
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_009 Полученный идентификатор записи ЗЛ <полученный ИД ЗЛ> не соответствует отправленному <отправленный ИД ЗЛ>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent" 
+
+  - case_id: eb868c0f-9d6b-487f-a971-593174a43ece
+    title: "Проверка актуальности данных прикрепления"
+    description: "Проверка ошибки AT_IFAR_010 при попытке подтвердить создание для прикрепления в неверном статусе"
+    priority: medium
+    steps:
+      - action: "Отправить сообщение <eventName> в топик AttachmentRequestCommandTopic с data.operationType = <operationType> и data.attachmentResult.attachId = ATTACH_ID"
+        expected_result: "Система сохраняет в таблицу SRV.attach_request_command_topic_receive_log  ошибку \"AT_IFAR_010 Прикрепление не может быть обновлено, полученные данные устарели. Текущий статус прикрепления <статус прикрепления> не соответствует типу операции <тип операции>.\""
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: operationType
+        value: A_CLOSING
+
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: operationType
+        value: A_CANCELING    
+    
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: operationType
+        value: A_CANCELING_WS    
+
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: operationType
+        value: A_CREATING
+
+  - case_id: 1fb5034f-575a-4b8f-bb2d-23d737e6fa0f
+    title: "Проверка обработки ответа ФЕРЗЛ с отрицательным результатом (result = 0)"
+    description: "Проверка обработки сообщения с отрицательным результатом операции в ФЕРЗЛ"
+    priority: high
+    steps:
+      - action: "Отправить   сообщение <eventName> в топик AttachmentRequestCommandTopic с ключом = PERSON_ID и data.attachmentResult.result = 0"
+        expected_result: |
+          Сообщение успешно доставлено в топик
+          Система сохраняет в таблице прикреплений attach.attachment признак обмена с ФЕРЗЛ:
+
+          attach.attachment.ferzl_transferred = 3
+          attach.attachment.change_date = current_timestamp
+          attach.attachment.attach_change_date = current_timestamp,
+          где attach.attachment.id = data/attachmentResult/attachId 
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"     
+
+  - case_id: a1d9c450-7f9b-4245-a223-71fd5474aae0
+    title: Выполнить проверку отправки в dead-lettter топика Kafka сообщение об ошибке
+    description: Описание
+    priority: medium
+    steps:
+      - action: "Отправить сообщение <eventName> в топик AttachmentRequestCommandTopic c <param>"
+        expected_result: "Система отправляет в dead-lettter топика Kafka сообщение об ошибке"
+    iterations:
+    - iteration_id: '1'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value: ошибкой ФЛК (srv.attach_request_command_topic_receive_log.status = 0, не удалось распарсить, не пройдена проверка ФЛК, отсутствует обязательное поле)    
+    - iteration_id: '2'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value:  Ошибкой сохранения подтверждения (srv.attach_request_command_topic_receive_log.status = 2, получение ошибки от ФЕРЗЛ)
+    - iteration_id: '3'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value:  Непредвиденной ошибкой (srv.attach_request_command_topic_receive_log.status = 3, не удалось обработать сообщение)
+    - iteration_id: '4'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value:  Данными, несоответствующими ранее отправленным (srv.attach_request_command_topic_receive_log.status = 4, не соответствуют,requestMessageId, attachId,insuredPersonId )
+    - iteration_id: '5'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentCreatedResultEvent"
+      - name: param
+        value:  Ошибкой публикации (srv.attach_request_command_topic_receive_log.status = 6, отсутствие ключа)
+    - iteration_id: '6'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: ошибкой ФЛК (srv.attach_request_command_topic_receive_log.status = 0, не удалось распарсить, не пройдена проверка ФЛК, отсутствует обязательное поле)    
+    - iteration_id: '7'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: Ошибкой сохранения подтверждения (srv.attach_request_command_topic_receive_log.status = 2, получение ошибки от ФЕРЗЛ)
+    - iteration_id: '8'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: Непредвиденной ошибкой (srv.attach_request_command_topic_receive_log.status = 3, не удалось обработать сообщение)
+    - iteration_id: '9'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "Данными, несоответствующим ранее отправленным (srv.attach_request_command_topic_receive_log.status = 4, не соответствуют,requestMessageId, attachId,insuredPersonId )"
+    - iteration_id: '10'
+      params:
+      - name: eventName
+        value: "FerzlAttachmentClosedResultEvent"
+      - name: param
+        value: "Ошибкой публикации (srv.attach_request_command_topic_receive_log.status = 6, отсутствие ключа)"
+     

@@ -1,0 +1,404 @@
+suite_id: c2d640e7-1ff0-45a1-be66-bb49e6998cb2
+suite_name: Негативные проверки алгоритма запуска процесса поиска и закрытия истекших прикреплений
+created_at: '2025-12-12T05:17:16Z'
+status: new
+created_by: Izam Agabalaev
+test_cases:
+  - case_id: 2eb69f8d-dd6d-49e3-9a0b-a951ff740d2a
+    title: 1.1 Проверка не запуска алгоритма при timeExpiredAttachmentScheduleFiredAlg.run.mode = 0
+    description: Проверка, что процесс не запускается при выключенном режиме работы
+    priority: high
+    steps:
+      - action: Запустить проверку условий запуска процесса поиска истекших прикреплений.
+        expected_result: |-
+          Процесс НЕ запускается.
+          Запись в таблице svr.run_control НЕ создаётся или НЕ обновляется.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 0 (выключен)
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 00:01:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 23:59:00
+          Текущее время находится в диапазоне timeExpiredAttachmentScheduleFiredAlg.run.beginTime - timeExpiredAttachmentScheduleFiredAlg.run.endTime.
+          Таблица svr.run_control пустая для code='TEAS'.
+        expected_result: ''
+
+  - case_id: 3a1c2d4e-5f6a-4b8c-9d0e-1f2a3b4c5d6e
+    title: 1.2 Проверка запуска алгоритма если текущее время раньше времени начала работы timeExpiredAttachmentScheduleFiredAlg.run.beginTime
+    description: Проверка, что процесс не запускается до наступления разрешённого времени
+    priority: high
+    steps:
+      - action: |
+          Запустить проверку условий запуска процесса поиска истекших прикреплений.
+        expected_result: |
+          Процесс НЕ запускается.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 08:00:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 20:00:00
+          Текущее время: 07:30:00 (раньше timeExpiredAttachmentScheduleFiredAlg.run.beginTime).
+          Таблица svr.run_control пустая для code='TEAS'.
+        expected_result: ''
+
+  - case_id: 4b2d3e5f-6a7b-4c9d-8e1f-2a3b4c5d6e7f
+    title: 1.3 Проверка запуска алгоритма если текущее время позже оканчания  работы timeExpiredAttachmentScheduleFiredAlg.run.endTime
+    description: Проверка, что процесс не запускается после окончания разрешённого времени
+    priority: high
+    steps:
+      - action: |-
+          Запустить проверку условий запуска процесса поиска истекших прикреплений.
+          Проверить условие: текущее время <= timeExpiredAttachmentScheduleFiredAlg.run.endTime
+        expected_result: |
+          Процесс НЕ запускается.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1 (включен)
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 08:00:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 20:00:00
+          Текущее время: 21:30:00 (позже timeExpiredAttachmentScheduleFiredAlg.run.endTime).
+          Таблица svr.run_control пустая для code='TEAS'.
+        expected_result: ''
+
+  - case_id: 5c3e4f6a-7b8c-4d0e-9f2a-3b4c5d6e7f8a
+    title: 1.4 Проверка не запуска алгоритма при условии не пройденного интервала времени timeExpiredAttachmentScheduleFiredAlg.run.startInterval
+    description: Проверка, что процесс не запускается, если не прошло достаточно времени с предыдущего запуска
+    priority: high
+    steps:
+      - action: 'Проверить запуск алгоритма '
+        expected_result: |-
+          Процесс НЕ запускается.
+          Запись в таблице svr.run_control НЕ обновляется.
+          Система ожидает следующей проверки через интервал timeExpiredAttachmentScheduleFiredAlg.run.controlTimeInterval.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1 (включен)
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 00:01:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 23:59:00
+          timeExpiredAttachmentScheduleFiredAlg.run.startInterval = 18 (часов)
+          Текущее время находится в разрешённом диапазоне.
+          В таблице svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 0
+          start_date = текущее время минус 10 часов (меньше timeExpiredAttachmentScheduleFiredAlg.run.startInterval)
+        expected_result: ''
+
+  - case_id: 6d4f5a7b-8c9d-4e1f-aa3b-4c5d6e7f8a9b
+    title: 1.5 Проверка не запуска алгоритма при условии, что процесс уже запущен и не завис (is_running = 1, timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod не истёк)
+    description: Проверка, что новый процесс не запускается, пока текущий активен и не завис
+    priority: high
+    steps:
+      - action: |-
+          Запустить проверку условий запуска процесса поиска истекших прикреплений.
+          Проверить условие: процесс поиска истекших прикреплений сейчас не работает
+          (в таблице svr.run_control нет записи, где выполняются условия через И):
+          svr.run_control.is_running = 1
+          svr.run_control.last_date >= current_timestamp - timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod
+          svr.run_control.code = 'TEAS'
+        expected_result: |-
+          Условие "процесс не работает" НЕ выполнено:
+          В таблице svr.run_control найдена запись с is_running = 1 и last_date >= current_timestamp - timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod
+          Процесс НЕ запускается.
+          Существующая запись в таблице svr.run_control НЕ обновляется.
+          Система ожидает следующей проверки через интервал timeExpiredAttachmentScheduleFiredAlg.run.controlTimeInterval.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1 
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 00:01:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 23:59:00
+          timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod = 30
+          Текущее время находится в разрешённом диапазоне.
+          В таблице svr.run_control существует запись:
+          code = 'TEAS'
+          is_running = 1
+          last_date = текущее время минус 10 минут (меньше timeExpiredAttachmentScheduleFiredAlg.run.resetPeriod)
+          start_date = текущее время минус 15 минут
+          host = хост, который запустил.
+        expected_result: ''
+
+  - case_id: 7e5a6b8c-9d0e-4f2a-8b4c-5d6e7f8a9b0c
+    title: 1.6 Проверка не запуска алгоритма при комбинации нескольких невыполненных условий
+    description: Проверка, что процесс не запускается при нескольких невыполненных условиях одновременно
+    priority: medium
+    steps:
+      - action: |-
+          Запустить проверку условий запуска процесса поиска истекших прикреплений.
+          Несколько условий НЕ выполнены:
+          - timeExpiredAttachmentScheduleFiredAlg.run.mode = 0 (выключен)
+          - текущее время < timeExpiredAttachmentScheduleFiredAlg.run.beginTime
+        expected_result: |-
+          Процесс НЕ запускается.
+          Запись в таблице svr.run_control НЕ создаётся и НЕ обновляется.
+          Система ожидает следующей проверки через интервал timeExpiredAttachmentScheduleFiredAlg.run.controlTimeInterval.
+    pre-conditions:
+      - action: |-
+          В srv.config установлены параметры:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 0
+          timeExpiredAttachmentScheduleFiredAlg.run.beginTime = 08:00:00
+          timeExpiredAttachmentScheduleFiredAlg.run.endTime = 20:00:00
+          Текущее время: 06:00:00 (раньше timeExpiredAttachmentScheduleFiredAlg.run.beginTime).
+          Таблица svr.run_control пустая для code='TEAS'.
+        expected_result: ''
+
+  - case_id: 8f6b7c9d-0e1f-4a3b-8c5d-6e7f8a9b0c1d
+    title: 2.1 Проверка возврата к 1 шагу, при ошибке обновления/создания записи в svr.run_control
+    description: Проверка возврата к проверке условий запуска при ошибке работы с БД
+    priority: high
+    steps:
+      - action: Проверить результат попытки записи в svr.run_control
+        expected_result: |-
+          Запись в svr.run_control НЕ создаётся/НЕ обновляется (ошибка работы с БД).
+          Система возвращается к проверке условий запуска процесса поиска истекших прикреплений.
+          Процесс ожидает следующей проверки через интервал timeExpiredAttachmentScheduleFiredAlg.run.controlTimeInterval.
+      - action: |-
+          Запустить алгоритм
+          Проверить результат попытки записи в svr.run_control
+        expected_result: |-
+          Запись в svr.run_control НЕ создаётся/НЕ обновляется (ошибка работы с БД).
+          Переход на шаг 1.
+    pre-conditions:
+      - action: |-
+          Все условия запуска выполнены:
+          timeExpiredAttachmentScheduleFiredAlg.run.mode = 1
+          Текущее время в разрешённом диапазоне.
+          Таблица svr.run_control недоступна или заблокирована бд
+        expected_result: ''
+
+  - case_id: 9a7c8d0e-1f2a-4b4c-9d6e-7f8a9b0c1d2e
+    title: 3.1 Проверка перехода к завершению работы при наличии процесса уже выполняющегося (status = 1)
+    description: Проверка выхода при наличии активного процесса
+    priority: high
+    steps:
+      - action: Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+        expected_result: |-
+          Появилась запись  в svr.run_control.
+          Зависшие записи отсутсвуют.
+      - action: |-
+          Проверить выполнение поиска записи в таблице attach.time_expired_attach_schedule по условиям:
+          date_process = текущая дата
+          status in (1, 2)
+        expected_result: 'Система находит запись со статусом status = 1(в работе) '
+      - action: Проверить завершение работы алгоритма
+        expected_result: |-
+          Система переходит к завершению работы (пункт 8).
+          Новая обработка НЕ выполняется.
+    pre-conditions:
+      - action: |-
+          Сценарий 2 выполнен успешно.
+          В таблице attach.time_expired_attach_schedule:
+          - Нет записей с date_process = текущая дата и status = 0
+          - Есть запись с date_process = текущая дата и status = 1 (в работе)
+        expected_result: ''
+
+  - case_id: ab8d9e1f-2a3b-4c5d-8e7f-8a9b0c1d2e3f
+    title: 3.2 Проверка сброса зависшей записи на текущую дату и формирование ошибки AT_TEAS_003
+    description: ''
+    priority: medium
+    steps:
+      - action: |-
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+          .
+        expected_result: Система фиксирует начало работы в svr.run_control.
+      - action: Проверить сброс зависшей записи в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          Система сбрасывает зависшую запись:
+          date_end = current_timestamp
+          status = 3
+          error = "Обработка зависла"
+          формируется ошибка с кодом AT_TEAS_003
+          change_date = current_timestamp
+          После сброса зависшей записи продолжает работу.
+    pre-conditions:
+      - action: |-
+          Сценарий 2 выполнен успешно.
+          В таблице attach.time_expired_attach_schedule существует запись:
+          date_process = текущая дата
+          status = 1 (в работе)
+          Есть зависшая запись.
+        expected_result: ''
+
+  - case_id: bc9e0f2a-3b4c-4d5e-9f01-0ab1c2d3e4f5
+    title: 4.1 (АС.1) Проверка формирования ошибки AT_TEAS_001 при невалидных параметрах
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+          Система фиксирует начало работы в svr.run_control.
+          Система создаёт запись в attach.time_expired_attach_schedule.
+          Система выполняет проверку заполнения обязательных для выполнения команды параметров.
+          <value>
+        expected_result: |-
+          Система фиксирует начало работы в svr.run_control.
+          Система создаёт запись в attach.time_expired_attach_schedule.
+      - action: Проверить формирование ошибки
+        expected_result: |-
+          Формируется ошибка AT_TEAS_001:
+          "Невозможно продолжить поиск и закрытие истёкших прикреплений.
+          Параметр(ы) <error> не заполнен(ы) или заполнен(ы) неверно."
+      - action: Проверить завершение работы с ошибкой в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          В таблице attach.time_expired_attach_schedule:
+          status = 3 (ошибка)
+          error = текст ошибки AT_TEAS_001 с полным перечнем наименований ошибочных параметров
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: |-
+              В srv.config установлен параметр:
+              timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 777
+              (нет в справочнике ref.attach_type)
+          - name: error
+            value: timeExpiredAttachmentScheduleFiredAlg.attachTypeCode
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: |-
+              В srv.config параметр timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+              не заполнен или = 'abc' (не соответствует типу integer)
+          - name: error
+            value: timeExpiredAttachmentScheduleFiredAlg.expirationPeriod
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: |-
+              В srv.config установлен параметр:
+              timeExpiredAttachmentScheduleFiredAlg.attachCloseCode = 999
+              (нет в справочнике ref.attach_close)
+          - name: error
+            value: timeExpiredAttachmentScheduleFiredAlg.attachCloseCode
+      - iteration_id: '4'
+        params:
+          - name: value
+            value: |-
+              В srv.config установлены параметры:
+              timeExpiredAttachmentScheduleFiredAlg.attachTypeCode = 999 (нет в ref.attach_type)
+              timeExpiredAttachmentScheduleFiredAlg.expirationPeriod не заполнен
+              timeExpiredAttachmentScheduleFiredAlg.attachCloseCode = 999 (нет в ref.attach_close)
+          - name: error
+            value: timeExpiredAttachmentScheduleFiredAlg.attachTypeCode, timeExpiredAttachmentScheduleFiredAlg.expirationPeriod, timeExpiredAttachmentScheduleFiredAlg.attachCloseCode
+
+  - case_id: fa3c4d6e-7f8a-4b9c-9345-4ef5a6b7c8d9
+    title: 5.1 (АС.2) Проверка формирования ошибки AT_TEAS_002 при непредвиденной ошибке при выполнении GetTimeExpiredAttachmentQuery
+    description: Проверка формирования ошибки AT_TEAS_002
+    priority: high
+    steps:
+      - action: |
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+        expected_result: Система выполняет проверку параметров (успешно).
+      - action: |-
+          Проверить формирование события TimeExpiredAttachmentScheduleFiredEvent
+          для вызова GetTimeExpiredAttachmentQuery
+        expected_result: |-
+          Система формирует событие TimeExpiredAttachmentScheduleFiredEvent.
+          При выполнении GetTimeExpiredAttachmentQuery получена непредвиденная ошибка.
+      - action: Проверить формирование ошибки AT_TEAS_002
+        expected_result: |-
+          Формируется ошибка AT_TEAS_002:
+          "При выполнении поиска истекших прикреплений получена ошибка: {текст ошибки}."
+      - action: Проверить фиксацию завершения работы с ошибкой в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          status = 3 (ошибка)
+          error = текст ошибки AT_TEAS_002
+    pre-conditions:
+      - action: |-
+          Сценарий 4 выполнен успешно
+          Симулировать ошибку при выполнении GetTimeExpiredAttachmentQuery.
+        expected_result: ''
+
+  - case_id: ab4d5e7f-8a9b-4cad-8456-5fa6b7c8d9e0
+    title: 6.2-6.3 Проверка отката транзакции при ошибке закрытия прикрепления
+    description: Проверка отката транзакции при выполнении InsideClosingAttachmentCommand
+    priority: high
+    steps:
+      - action: |+
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+
+        expected_result: |-
+          При выполнении закрытия прикрепления получена непредвиденная ошибка.
+          Система откатывает транзакцию.
+          Изменения в attach.attachment НЕ сохраняются.
+          Результат обработки НЕ сохраняется в таблице srv.closed_expired_attach_log.
+      - action: Проверить откат транзакции
+        expected_result: |-
+          Изменения в attach.attachment НЕ сохраняются.
+          Результат обработки НЕ сохраняется в таблице srv.closed_expired_attach_log.
+      - action: Проверить обновление счётчика ошибок в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          В таблице attach.time_expired_attach_schedule:
+          attach_count_error = attach_count_error + 1
+          change_date = current_timestamp
+      - action: Проверить продолжение обработки
+        expected_result: Система переходит к обработке следующего прикрепления (шаг 6 повторяется).
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+          Симулировать ошибку при вызове InsideClosingAttachmentCommand.
+        expected_result: ''
+
+  - case_id: de7a8b0c-1d2e-4fd0-b789-8cd9e0f1a2b3
+    title: 6.5.1 Проверка формирования ошибки AT_TEAS_005 при останове приложения
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+          Система обрабатывает найденные прикрепления.
+        expected_result: Система обрабатывает прикрепления.
+      - action: |-
+          Во время обработки прикреплений инициировать останов приложения.
+          Система выполняет проверку останова приложения (шаг 6.5.1).
+        expected_result: |-
+          Приложение остановлено.
+          Формируется ошибка AT_TEAS_005.
+          Система переходит к завершению работы (шаг 7).
+      - action: Проверить фиксацию завершения работы с ошибкой
+        expected_result: |-
+          В таблице attach.time_expired_attach_schedule:
+          status = 3 (ошибка)
+          error = текст ошибки AT_TEAS_005
+          В таблице svr.run_control:
+          is_running = 0 (процесс не запущен)
+    pre-conditions:
+      - action: |-
+          Сценарий 5 выполнен успешно (найдены истекшие прикрепления).
+          Во время обработки прикреплений инициировать останов приложения.
+        expected_result: ''
+
+  - case_id: bc5e6f8a-9b0c-4dbe-a567-6ab7c8d9e0f1
+    title: 6.5.2 Проверка формирования ошибки AT_TEAS_004 при нарушении условий продолжения работы
+    description: ''
+    priority: high
+    steps:
+      - action: |-
+          Запустить алгоритм timeExpiredAttachmentScheduleFiredAlg.
+          Система обрабатывает первое прикрепление успешно.
+        expected_result: Система обрабатывает первое прикрепление успешно.
+      - action: |
+          <value>
+        expected_result: |-
+          Формируется ошибка AT_TEAS_004.
+          Система переходит к завершению работы (шаг 7).
+      - action: Проверить фиксацию завершения работы с ошибкой в таблице attach.time_expired_attach_schedule
+        expected_result: |-
+          В таблице attach.time_expired_attach_schedule:
+          status = 3 (ошибка)
+          error = текст ошибки AT_TEAS_004
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: value
+            value: Изменить параметр timeExpiredAttachmentScheduleFiredAlg.run.mode = 0 во время обработки
+      - iteration_id: '2'
+        params:
+          - name: value
+            value: Дождаться выхода текущего времени за пределы timeExpiredAttachmentScheduleFiredAlg.run.endTime
+      - iteration_id: '3'
+        params:
+          - name: value
+            value: Дождаться наступления времени раньше timeExpiredAttachmentScheduleFiredAlg.run.beginTime (следующий день)

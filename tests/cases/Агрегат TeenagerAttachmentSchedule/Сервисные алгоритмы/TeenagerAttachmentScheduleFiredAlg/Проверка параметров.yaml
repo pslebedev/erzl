@@ -1,0 +1,78 @@
+suite_id: da03fadc-71df-4c55-a501-ecec854a8509
+suite_name: Проверка параметров
+description: Описание
+created_at: '2026-01-13T06:10:30Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 5735ba59-3c88-4320-83ff-d906991208de
+    title: Проверка параметра teenagerAttachmentScheduleFired.run.controlTimeInterval
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 5ebdb982-c9a4-45f5-b3f4-054fb912782c
+    title: Проверка параметра teenagerAttachmentScheduleFired.run.mode
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 0af85d22-fc5a-4283-a61f-5eec8ab8d6e7
+    title: Проверка параметра teenagerAttachmentScheduleFired.run.beginTime
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: c7535112-9ea9-454a-bf6e-1f81806986ae
+    title: Проверка параметра teenagerAttachmentScheduleFired.run.endTime
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 33d14613-6dac-416b-bc8b-30648156afd7
+    title: "Проверка параметра\_teenagerAttachmentScheduleFired.run.startInterval"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: f484bb58-9d3a-4384-b2cc-06a0e1219312
+    title: "Проверка параметра\_ teenagerAttachmentScheduleFired.run.resetPeriod"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: f434358b-0647-4820-bf43-bef6740c7ab9
+    title: Проверка параметра teenagerAttachmentScheduleFired.periodAfterBirthday
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: 1bfc9c3f-e791-4fb8-8fa3-4ed6141d65a9
+    title: "Проверка параметра\_teenagerAttachmentScheduleFired.moAgeCategoryCodeChildren"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат
+
+  - case_id: d5ae75b4-656f-473b-905e-93ad0d154f4f
+    title: "Проверка параметра\_teenagerAttachmentScheduleFired.moAgeCategoryCodeMix"
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

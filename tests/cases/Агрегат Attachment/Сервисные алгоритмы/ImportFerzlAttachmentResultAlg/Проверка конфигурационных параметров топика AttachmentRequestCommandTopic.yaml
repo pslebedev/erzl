@@ -1,0 +1,52 @@
+suite_id: d92a4b14-6a61-4652-b5ac-89edd32bed75
+suite_name: Проверка конфигурационных параметров
+description: Описание
+created_at: "2025-12-22T11:43:57Z"
+status: new
+created_by: p.lebedev
+test_cases:
+  - case_id: d77da896-bc18-4b12-a135-8c6a59a0fbdd
+    title: "Проверка алгоритма  при run.mode = 0"
+    description: "Проверка, что алгоритм не обрабатывает сообщения при выключенном режиме работы"
+    priority: high
+    pre-conditions:
+      - action: "Настроен доступ к схеме БД srv"
+    steps:
+      - action: "Установить значение системного параметра attachmentRequestCommandTopic.import.run.mode = 0"
+        expected_result: "Параметр успешно установлен в 0"
+      - action: "Отправить тестовое сообщение в топик AttachmentRequestCommandTopic"
+        expected_result: "Сообщение успешно доставлено в топик"
+      - action: "Проверить наличие записей c message_key отправленного сообщения  в srv.attach_request_command_topic_receive_log"
+        expected_result: "Записей в логе не найдено"
+
+  - case_id: f864c216-c0d4-46b2-8d4d-6d87cc9f894b
+    title: "Алгоритм не запускается при текущем времени меньше beginTime"
+    description: "Проверка, что алгоритм не работает до установленного времени начала"
+    priority: medium
+    pre-conditions:
+      - action: "Настроен доступ к схеме БД srv"
+      - action: "Подготовлено валидное тестовое сообщение для отправки в топик"
+      - action: "attachmentRequestCommandTopic.import.run.mode = 1"
+    steps:
+      - action: "Установить время начала работы через 1 час от текущего времени"
+        expected_result: "Параметр beginTime успешно установлен"
+      - action: "Отправить тестовое сообщение в топик AttachmentRequestCommandTopic"
+        expected_result: "Сообщение успешно доставлено в топик"
+      - action: "Проверить наличие записей c message_key отправленного сообщения  в srv.attach_request_command_topic_receive_log"
+        expected_result: "Записей в логе не найдено (count = 0)"
+
+  - case_id: 809f263a-8d52-4ca9-901f-44bea9db8e27
+    title: "Алгоритм не запускается при текущем времени больше endTime"
+    description: "Проверка, что алгоритм не работает после установленного времени окончания"
+    priority: medium
+    pre-conditions:
+      - action: "Настроен доступ к схеме БД srv"
+      - action: "Подготовлено валидное тестовое сообщение для отправки в топик"
+      - action: "attachmentRequestCommandTopic.import.run.mode = 1"
+    steps:
+      - action: "Установить время окончания работы за 1 час до текущего времени "
+        expected_result: "Параметр endTime успешно установлен"
+      - action: "Отправить тестовое сообщение в топик AttachmentRequestCommandTopic"
+        expected_result: "Сообщение успешно доставлено в топик"        
+      - action: "Проверить наличие записей c message_key отправленного сообщения  в srv.attach_request_command_topic_receive_log"
+        expected_result: "Записей в логе не найдено (count = 0)"

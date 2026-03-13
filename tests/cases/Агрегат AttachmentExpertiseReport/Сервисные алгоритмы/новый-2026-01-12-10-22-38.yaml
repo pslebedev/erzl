@@ -1,0 +1,14 @@
+suite_id: a4b81ff0-dd6b-4cb6-bb5e-26a95a0aae25
+suite_name: Название test suite
+description: Описание
+created_at: "2026-01-12T07:22:38Z"
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: c441dea2-e2c8-4747-aa4f-dc75380aeb1a
+    title: Название тест-кейса
+    description: Описание
+    priority: high
+    steps:
+      - action: Действие
+        expected_result: Ожидаемый результат

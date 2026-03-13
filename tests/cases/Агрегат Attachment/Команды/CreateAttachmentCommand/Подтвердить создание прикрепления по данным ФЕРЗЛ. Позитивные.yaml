@@ -1,0 +1,127 @@
+suite_id: 4f96cc58-70fa-4153-92d6-c230afcfecb7
+suite_name: Подтверждение создания прикрепления в ФЕРЗЛ. Позитивные
+description: ""
+created_at: 2025-11-05T11:28:02.504Z
+status: new
+created_by: Лебедев Павел
+test_cases:
+  - case_id: 62eeb2a6-d492-41a5-a35d-9364109c7bc3
+    title: Проверка обновления записи прикрепления в БД (таблица attachment)
+    description: ""
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть прикрепление со статусом != A_CREATED
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent с валидным attachId
+        expected_result: |
+          В таблице attachment обновлены поля:
+          ref_attach_status_code : A_CREATED
+          ref_attach_status_ferzl_code : data.attachmentResult.ferzlResponseAttach.attachStatus
+          ferzl_transferred : 2
+          is_active : 1
+          change_date : NOW()
+          attach_change_date : NOW()
+
+  - case_id: 0a3c578b-4b03-4891-9d50-e0e50f520308
+    title: Проверка создания записи в attachment_history
+    priority: medium
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть прикрепление со статусом ≠ A_CREATED. В таблице attach_event_topic_send_log нет closing_attachment_id по этому requestMessageId (или параметр конфигурации для автозакрытия = 0).
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent с валидным attachId.
+        expected_result: |
+          Создана запись со значениями:
+
+            Поле	Значение
+            attachment_id	= 
+            change_source	metadata/systemCode
+            change_by_user	null
+            change_event	AttachmentCreatedEvent
+            ref_mo_mgfoms_core_mo_code_f032	взято из mo_info_attach.ref_mo_mgfoms_core_code_f032
+            ref_f002_smo_code	взято из person_info.ref_f002_smo_code
+            attachment_body	JSON со снимком таблиц: attachment + mo_info_attach + person_info
+  
+  - case_id: 97f3ec11-cfba-42bb-9f6f-b263a3dab5d5
+    title: Проверка сохранения сведений для отправки сообщения в таблицу attach_event_topic_send
+    priority: low
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть прикрепление со статусом ≠ A_CREATED. В таблице attach_event_topic_send_log нет closing_attachment_id по этому requestMessageId (или параметр конфигурации для автозакрытия = 0).
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent с валидным attachId.
+        expected_result: |
+          Наименование поля: в БД Заполнение
+          id : авто
+          insured_person_id : data.attachment.insuredPersonId
+          attachment_id : data.attachment.attachId
+          closing_attachment_id : attachment.id закрытого прикрепления (если на шаге 2 подтверждено)
+          operation_type : data.operationType
+          message_id : data.messageId
+          message_text : сформированное сообщение
+          status : 0
+          create_date : current_timestamp
+          change_date : current_timestamp
+
+  - case_id: bd25c03a-24ce-42ed-9868-b00bb348b34f
+    title: Проверка отправки сообщения в топик AttachmentEventTopic
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть прикрепление со статусом != A_CREATED
+      
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent с валидным attachId.
+        expected_result: 
+      - action: Открыть Kafka UI , топик AttachmentEventTopic
+        expected_result: В Отображаются сообщения топика
+      - action: Найти по ключу сообщение 
+        expected_result: В Отображаются корректное сообщение топика
+  
+  - case_id: 8d6b1c81-f927-49b6-81e6-f49964a85c59
+    title: Проверка условий срабатывания автозакрытия и обновления статуса ранее закрытого прикрепления 
+    priority: high
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |
+          В БД есть прикрепление со статусом != A_CREATED
+          В attach_event_topic_send_log по requestMessageId заполнено поле closing_attachment_id
+          В config параметр attachmentRequestCommandTopic.import.closeAttachByCreate = 1
+          В таблице attachment статус старого прикрепления = A_CLOSING
+
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent
+        expected_result: |
+         Система вызывает CloseAttachmentCommand для закрытия старого прикрепления.
+         У старого прикрепления статус изменён на A_CLOSED
+         История закрытия записана в attachment_history
+
+  - case_id: 2dea474d-9a2f-4cd1-b492-d0a5adcefeb6
+    title: Проверка создания В attach_event_topic_send  записи с closing_attachment_id
+    priority: low
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: |
+          В БД есть прикрепление со статусом != A_CREATED
+          В attach_event_topic_send_log по requestMessageId заполнено поле closing_attachment_id
+          В config параметр attachmentRequestCommandTopic.import.closeAttachByCreate = 1
+          В таблице attachment статус старого прикрепления = A_CLOSING
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent
+        expected_result: |
+         В таблице attach_event_topic_send создаётся отдельная запись для закрытия с operation_type = CLOSED
+
+  - case_id: c3d4e5f6-7a8b-4c5d-0e1f-2a3b4c5d6e7f
+    title: Проверка обрезания полей descr, dsource, dsourceType до 255 символов при сохранении в БД
+    description: При получении события FerzlAttachmentCreatedResultEvent значения полей descr, dsource, dsourceType, превышающие длину поля в БД (255 символов), должны обрезаться до 255 символов при обновлении записи в таблице attachment.
+    priority: medium
+    pre-conditions:
+      - action: Отправить сообщение в топик AttachmentExternalEventTopic, operationType = CREATED
+        expected_result: В БД есть прикрепление со статусом != A_CREATED
+    steps:
+      - action: Отправить событие FerzlAttachmentCreatedResultEvent с валидным attachId, в котором поля descr, dsource, dsourceType содержат значения длиной более 255 символов
+        expected_result: |-
+          Система выполняет обновление сведений прикрепления в таблице attachment.
+          Значения полей descr, dsource, dsourceType обрезаются до 255 символов и сохраняются в БД (длина поля в БД — 255 символов).
+
