@@ -1,7 +1,10 @@
 suite_id: 5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9
 suite_name: Сервисные алгоритмы - Конфиги
-
-cases:
+description: Описание
+created_at: "2026-01-12T07:22:26Z"
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
   - case_id: 11a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c
     name: "Успешное чтение полного конфигурационного файла"
     description: "Проверка парсинга всех ключевых параметров из конфига джобы"
