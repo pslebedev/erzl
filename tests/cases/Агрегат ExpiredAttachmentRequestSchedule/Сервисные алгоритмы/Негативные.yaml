@@ -4,9 +4,10 @@ description: Описание
 created_at: "2026-01-12T07:22:26Z"
 status: new
 created_by: Inna Zaikovskaya
+
 test_cases:
   - case_id: 55e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a
-    name: "Ошибка валидации при отрицательном expirationPeriod"
+    title: "Ошибка валидации при отрицательном expirationPeriod"
     description: "Проверка, что алгоритм не запускается и выдает ошибку, если период просрочки указан меньше нуля"
     steps:
       - action: "Передать конфигурацию с expirationPeriod = -5"
@@ -15,7 +16,7 @@ test_cases:
         expected: "Ошибка инициализации/валидации: expirationPeriod не может быть отрицательным"
 
   - case_id: 66f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b
-    name: "Ошибка при некорректном лимите maxCountRows"
+    title: "Ошибка при некорректном лимите maxCountRows"
     description: "Лимит обрабатываемых записей за один запуск должен быть больше нуля"
     steps:
       - action: "Передать в конфигурации maxCountRows = 0 (или -1)"
@@ -24,7 +25,7 @@ test_cases:
         expected: "Выброшено исключение или ошибка валидации: лимит заявок должен быть > 0"
 
   - case_id: 77a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c
-    name: "Отсутствие обязательного параметра dateProcess"
+    title: "Отсутствие обязательного параметра dateProcess"
     description: "Проверка обработки пустого значения даты запуска алгоритма (профилактика NullPointerException)"
     steps:
       - action: "Передать конфигурацию без указания dateProcess (null)"
@@ -33,7 +34,7 @@ test_cases:
         expected: "Выброшена понятная ошибка об отсутствии обязательного параметра, алгоритм прервал работу корректно"
 
   - case_id: 88b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d
-    name: "Некорректный флаг countFromDateExpired"
+    title: "Некорректный флаг countFromDateExpired"
     description: "Флаг отсчета даты должен принимать строго определенные значения (0 - решение врача, 1 - дата подачи)"
     steps:
       - action: "Передать в конфигурации countFromDateExpired = 99"
@@ -42,7 +43,7 @@ test_cases:
         expected: "Ошибка валидации параметра: неизвестный тип отсчета даты"
 
   - case_id: 99c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3e
-    name: "Неизвестный статус attachRequestStatusCode"
+    title: "Неизвестный статус attachRequestStatusCode"
     description: "Попытка поиска заявок по несуществующему коду статуса"
     steps:
       - action: "Передать конфигурацию с attachRequestStatusCode = 'arUnknownStatus123'"
