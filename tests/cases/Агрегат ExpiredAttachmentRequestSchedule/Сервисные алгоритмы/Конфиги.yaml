@@ -1,42 +1,125 @@
-suite_id: 5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9
-suite_name: Сервисные алгоритмы - Конфиги
-description: Описание
-created_at: "2026-01-12T07:22:26Z"
+suite_id: da03fadc-71df-4c55-a501-ecec854a8509
+suite_name: EARS_Проверка_параметров
+description: Проверка системных параметров конфигурации (expiredAttachmentRequestScheduleFiredAlg)
+created_at: '2026-03-13T10:15:00Z'
 status: new
 created_by: Inna Zaikovskaya
 test_cases:
-  - case_id: 11a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c
-    title: "Успешное чтение полного конфигурационного файла"
-    description: "Проверка парсинга всех ключевых параметров из конфига джобы"
+  - case_id: 5735ba59-3c88-4320-83ff-d906991208de
+    title: Проверка параметра run.controlTimeInterval
+    description: Проверка частоты опроса системы для запуска алгоритма
+    priority: medium
     steps:
-      - action: "Передать конфигурацию с заполненными dateProcess, expirationPeriod, maxCountRows, attachRequestStatusCode, countFromDateExpired"
-        expected: "Конфигурация передана"
-      - action: "Инициализировать агрегат ExpiredAttachmentRequestSchedule"
-        expected: "Агрегат успешно прочитал и сохранил все переданные значения"
+      - action: 'Установить в БД/конфиге expiredAttachmentRequestScheduleFiredAlg.run.controlTimeInterval = 5 минут'
+        expected_result: 'Система инициирует проверку условий запуска (шаг 1 алгоритма) ровно 1 раз в 5 минут'
 
-  - case_id: 22b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d
-    title: "Применение значений по умолчанию при неполном конфиге"
-    description: "Если в конфиге отсутствуют необязательные параметры, должны примениться дефолтные значения"
+  - case_id: 5ebdb982-c9a4-45f5-b3f4-054fb912782c
+    title: Проверка параметра run.mode (Режим работы)
+    description: Включение и выключение джоба
+    priority: high
     steps:
-      - action: "Передать конфигурацию без указания maxCountRows и countFromDateExpired"
-        expected: "Конфигурация передана"
-      - action: "Инициализировать агрегат"
-        expected: "Агрегат загружен, параметрам maxCountRows и countFromDateExpired присвоены дефолтные значения системы"
+      - action: 'Установить expiredAttachmentRequestScheduleFiredAlg.run.mode = 0'
+        expected_result: 'Процесс поиска не запускается (шаг 1 не проходит валидацию)'
+      - action: 'Установить expiredAttachmentRequestScheduleFiredAlg.run.mode = 1'
+        expected_result: 'Процесс переходит к проверке времени работы (run.beginTime / run.endTime)'
 
-  - case_id: 33c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e
-    title: "Чтение конфига с минимальным maxCountRows"
-    description: "Проверка корректной инициализации при maxCountRows = 1"
+  - case_id: 0af85d22-fc5a-4283-a61f-5eec8ab8d6e7
+    title: Проверка параметров run.beginTime и run.endTime
+    description: Проверка временного окна работы команды
+    priority: high
     steps:
-      - action: "Задать в конфиге maxCountRows = 1"
-        expected: "Конфиг сохранен"
-      - action: "Запустить инициализацию"
-        expected: "Параметр maxCountRows = 1 успешно прочитан, ошибки валидации не возникло"
+      - action: 'Установить run.beginTime = 02:00, run.endTime = 05:00. Системное время: 01:59'
+        expected_result: 'Запуск запрещен. Процесс не стартует.'
+      - action: 'Системное время: 03:00'
+        expected_result: 'Запуск разрешен. Процесс стартует и переходит к шагу 2.'
+      - action: 'Системное время: 05:01'
+        expected_result: 'Запуск запрещен. Процесс не стартует.'
 
-  - case_id: 44d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f
-    title: "Проверка фильтрации по attachRequestStatusCode"
-    description: "Убедиться, что агрегат корректно считывает целевой статус для поиска заявок"
+  - case_id: 33d14613-6dac-416b-bc8b-30648156afd7
+    title: Проверка параметра run.startInterval
+    description: Интервал между запусками (защита от частого старта)
+    priority: medium
     steps:
-      - action: "Указать в конфиге attachRequestStatusCode = 'arDraft'"
-        expected: "Конфигурация передана"
-      - action: "Проверить параметры инициализированного агрегата"
-        expected: "Агрегат настроен на поиск только заявок со статусом 'arDraft'"
+      - action: 'В SRV.RUN_CONTROL есть успешная запись EARS. Текущее время минус START_DATE < run.startInterval'
+        expected_result: 'Условие запуска не выполнено. Команда не стартует.'
+      - action: 'Текущее время минус START_DATE >= run.startInterval'
+        expected_result: 'Условие выполнено. Команда стартует.'
+
+  - case_id: f484bb58-9d3a-4384-b2cc-06a0e1219312
+    title: Проверка параметра run.resetPeriod
+    description: Детектирование зависших процессов
+    priority: high
+    steps:
+      - action: 'Сымитировать зависание: srv.run_control.last_date < (текущие дата/время минус run.resetPeriod)'
+        expected_result: 'Система считает процесс зависшим. Запись обновляется (is_running = 1, start_date = current_timestamp).'
+
+  - case_id: 1bfc9c3f-e791-4fb8-8fa3-4ed6141d65a9
+    title: Проверка связки параметров Архива (findArchivedRequest)
+    description: Изолированный запуск поиска архивных заявлений
+    priority: high
+    steps:
+      - action: |-
+          Установить:
+          findArchivedRequest = 1
+          archivedPeriod = 30
+          countFromDateApplyArchived = 1
+        expected_result: 'Валидация (шаг 4) пройдена. Формируется событие для поиска arDraft.'
+      - action: 'Установить findArchivedRequest = 0'
+        expected_result: 'Поиск архивных заявлений игнорируется (п. 1.1.3), система переходит к проверке ГВ заявлений.'
+
+  - case_id: d5ae75b4-656f-473b-905e-93ad0d154f4f
+    title: Проверка связки параметров ГВ (findExpiredDocRequest)
+    description: Изолированный запуск поиска заявлений ГВ
+    priority: high
+    steps:
+      - action: |-
+          Установить:
+          findExpiredDocRequest = 1
+          expirationDocPeriod = 14
+          countFromDateApplyExpiredDoc = 0
+        expected_result: 'Валидация (шаг 4) пройдена. Формируется событие для поиска arCreated.'
+
+  - case_id: e8f90a1b-2c3d-4e5f-67a8-b9c0d1e2f3a4
+    title: Проверка связки параметров СМО (findExpiredSmoRequest)
+    description: Изолированный запуск поиска заявлений СМО
+    priority: high
+    steps:
+      - action: |-
+          Установить:
+          findExpiredSmoRequest = 1
+          expirationSmoPeriod = 5
+          countFromDateApplyExpiredSmo = 1
+        expected_result: 'Валидация (шаг 4) пройдена. Формируется событие для поиска arSmoApproving и arApproved.'
+
+  - case_id: f90a1b2c-3d4e-5f67-a8b9-c0d1e2f3a4b5
+    title: Проверка параметра queryMaxCountRows (Лимит строк)
+    description: Валидация дефолтного значения лимита возвращаемых строк
+    priority: medium
+    steps:
+      - action: 'Запустить алгоритм при различных значениях параметра expiredAttachmentRequestScheduleFiredAlg.queryMaxCountRows: <param>'
+        expected_result: 'При формировании события ExpiredAttachmentRequestScheduleFiredEvent передается maxCountRows = <expected>'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: '500 (корректное integer > 0)'
+          - name: expected
+            value: '500'
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: 'пусто (null)'
+          - name: expected
+            value: '100 (дефолт)'
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: 'строка "двести"'
+          - name: expected
+            value: '100 (дефолт)'
+      - iteration_id: '4'
+        params:
+          - name: param
+            value: '0 или отрицательное (-10)'
+          - name: expected
+            value: '100 (дефолт)'

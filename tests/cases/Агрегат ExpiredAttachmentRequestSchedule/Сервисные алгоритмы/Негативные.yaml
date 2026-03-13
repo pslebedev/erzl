@@ -1,52 +1,172 @@
-suite_id: 8c7b6a5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d
-suite_name: Сервисные алгоритмы - Негативные
-description: Описание
-created_at: "2026-01-12T07:22:26Z"
+suite_id: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
+suite_name: EARS_Негативные
+description: Проверка альтернативных сценариев и формирования ошибок (AT_EARS_001 - AT_EARS_005)
+created_at: '2026-03-13T10:05:00Z'
 status: new
 created_by: Inna Zaikovskaya
-
 test_cases:
-  - case_id: 55e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a
-    title: "Ошибка валидации при отрицательном expirationPeriod"
-    description: "Проверка, что алгоритм не запускается и выдает ошибку, если период просрочки указан меньше нуля"
+  - case_id: 1816c42c-2460-4790-8e58-88d086dad71e
+    title: 1. Проверка НЕ возможности запуска процесса поиска просроченных заявлений
+    description: Алгоритм не должен запускаться, если условия не выполнены
+    priority: high
     steps:
-      - action: "Передать конфигурацию с expirationPeriod = -5"
-        expected: "Конфигурация передана"
-      - action: "Инициализировать агрегат ExpiredAttachmentRequestSchedule"
-        expected: "Ошибка инициализации/валидации: expirationPeriod не может быть отрицательным"
+      - action: 'Дождаться интервала expiredAttachmentRequestScheduleFiredAlg.run.controlTimeInterval'
+        expected_result: 'Процесс не запускается, новые записи в srv.run_control не создаются'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: Режим работы выключен (expiredAttachmentRequestScheduleFiredAlg.run.mode = 0)
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: Текущее время меньше времени начала (текущее время < run.beginTime)
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: Текущее время больше времени окончания (текущее время > run.endTime)
 
-  - case_id: 66f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b
-    title: "Ошибка при некорректном лимите maxCountRows"
-    description: "Лимит обрабатываемых записей за один запуск должен быть больше нуля"
+  - case_id: 4b0f1ab1-92a0-41a8-ad76-eaa6feb704b8
+    title: "AC.1 Проверка формирования ошибки AT_EARS_001 при отсутствии обязательных параметров"
+    description: Валидация параметров поиска (шаг 4)
+    priority: high
     steps:
-      - action: "Передать в конфигурации maxCountRows = 0 (или -1)"
-        expected: "Конфигурация передана"
-      - action: "Запустить джобу ExpiredAttachmentRequestScheduleFiredEvent"
-        expected: "Выброшено исключение или ошибка валидации: лимит заявок должен быть > 0"
+      - action: Запуск процесса при некорректной конфигурации <param>
+        expected_result: |-
+          В таблице attach.expired_attachment_request_schedule фиксируется:
+          date_end = current_timestamp
+          status = 3
+          error = "AT_EARS_001 - Невозможно продолжить поиск . Параметр(ы) {0} не заполнен(ы) или заполнен(ы) неверно."
+          Переход к завершению работы (шаг 7).
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: findArchivedRequest=1, но archivedPeriod не заполнен
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: findArchivedRequest=1, но archivedPeriod <= 0
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: findArchivedRequest=1, но countFromDateApplyArchived не равен 0 или 1 (например, 2)
+      - iteration_id: '4'
+        params:
+          - name: param
+            value: findExpiredDocRequest=1, но expirationDocPeriod не заполнен
+      - iteration_id: '5'
+        params:
+          - name: param
+            value: findExpiredDocRequest=1, но countFromDateApplyExpiredDoc не равен 0 или 1
+      - iteration_id: '6'
+        params:
+          - name: param
+            value: findExpiredSmoRequest=1, но expirationSmoPeriod строка (не integer)
+      - iteration_id: '7'
+        params:
+          - name: param
+            value: findExpiredSmoRequest=1, но countFromDateApplyExpiredSmo не равен 0 или 1
 
-  - case_id: 77a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c
-    title: "Отсутствие обязательного параметра dateProcess"
-    description: "Проверка обработки пустого значения даты запуска алгоритма (профилактика NullPointerException)"
+  - case_id: 640c35cd-ac7d-4033-9a08-6ff24ccb572d
+    title: "AC.2 Формирование непредвиденной ошибки БД при поиске GetExpiredAttachmentRequestQuery"
+    description: Обработка падения селекта
+    priority: high
     steps:
-      - action: "Передать конфигурацию без указания dateProcess (null)"
-        expected: "Конфигурация передана"
-      - action: "Запустить алгоритм"
-        expected: "Выброшена понятная ошибка об отсутствии обязательного параметра, алгоритм прервал работу корректно"
+      - action: 'При выполнении GetExpiredAttachmentRequestQuery получена непредвиденная ошибка (например, таймаут БД)'
+        expected_result: |-
+          В таблице attach.expired_attachment_request_schedule фиксируется:
+          date_end = current_timestamp
+          status = 3
+          error = "AT_EARS_002 - При выполнении поиска получена ошибка: {0}."
 
-  - case_id: 88b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d
-    title: "Некорректный флаг countFromDateExpired"
-    description: "Флаг отсчета даты должен принимать строго определенные значения (0 - решение врача, 1 - дата подачи)"
+  - case_id: 080553db-1105-4102-b6f9-9f97b8046079
+    title: 6.4 Проверка формирования ошибки AT_EARS_005, если приложение остановлено
+    description: Остановка приложения в процессе итерации по списку заявлений
+    priority: high
     steps:
-      - action: "Передать в конфигурации countFromDateExpired = 99"
-        expected: "Конфигурация передана"
-      - action: "Запустить поиск просроченных заявок"
-        expected: "Ошибка валидации параметра: неизвестный тип отсчета даты"
+      - action: 'На шаге 6.4 (после обработки очередного заявления) перевести приложение в статус "Остановлено"'
+        expected_result: |-
+          Система прерывает цикл.
+          Формирует ошибку с кодом AT_EARS_005.
+          Переходит на шаг 7 (status = 3).
 
-  - case_id: 99c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3e
-    title: "Неизвестный статус attachRequestStatusCode"
-    description: "Попытка поиска заявок по несуществующему коду статуса"
+  - case_id: e28054b5-fd74-4ae0-80e1-d1ad66ced40c
+    title: 6.4 Проверка формирования ошибки AT_EARS_004, если продолжить работу не разрешено
+    description: Наступление нерабочего времени в процессе итерации
+    priority: high
     steps:
-      - action: "Передать конфигурацию с attachRequestStatusCode = 'arUnknownStatus123'"
-        expected: "Конфигурация передана"
-      - action: "Запустить алгоритм поиска"
-        expected: "Алгоритм не находит ни одной заявки и корректно завершает работу (или выдает ошибку валидации статуса на старте)"
+      - action: 'На шаге 6.4 изменить системное время так, чтобы текущее время стало > expiredAttachmentRequestScheduleFiredAlg.run.endTime'
+        expected_result: |-
+          Система прерывает цикл.
+          Формирует ошибку с кодом AT_EARS_004.
+          Переходит на шаг 7 (status = 3).
+
+---
+suite_id: da03fadc-71df-4c55-a501-ecec854a8509
+suite_name: EARS_Проверка_параметров
+description: Проверка граничных значений и типов параметров конфигурации
+created_at: '2026-03-13T10:10:30Z'
+status: new
+created_by: Inna Zaikovskaya
+test_cases:
+  - case_id: 5735ba59-3c88-4320-83ff-d906991208de
+    title: Проверка параметра expiredAttachmentRequestScheduleFiredAlg.run.controlTimeInterval
+    description: Частота запуска проверок
+    priority: medium
+    steps:
+      - action: 'Установить controlTimeInterval = 5 минут'
+        expected_result: 'Система инициирует проверку условий запуска ровно раз в 5 минут'
+
+  - case_id: 33d14613-6dac-416b-bc8b-30648156afd7
+    title: Проверка параметра expiredAttachmentRequestScheduleFiredAlg.run.startInterval
+    description: Интервал между успешными запусками (защита от спама)
+    priority: medium
+    steps:
+      - action: 'Текущее время - SRV.RUN_CONTROL.START_DATE < run.startInterval'
+        expected_result: 'Процесс поиска не стартует, ожидается истечение интервала'
+
+  - case_id: f484bb58-9d3a-4384-b2cc-06a0e1219312
+    title: Проверка параметра expiredAttachmentRequestScheduleFiredAlg.run.resetPeriod
+    description: Детектирование "зависших" процессов
+    priority: high
+    steps:
+      - action: 'Сымитировать зависание: srv.run_control.last_date < текущие дата/время минус run.resetPeriod'
+        expected_result: 'Система классифицирует процесс как зависший, сбрасывает статус (ошибка AT_EARS_003) и перезапускает обработку'
+
+  - case_id: d5ae75b4-656f-473b-905e-93ad0d154f4f
+    title: Проверка параметра expiredAttachmentRequestScheduleFiredAlg.queryMaxCountRows
+    description: Проверка дефолтного значения при некорректном лимите
+    priority: medium
+    steps:
+      - action: 'Передать queryMaxCountRows = <param>'
+        expected_result: 'При вызове GetExpiredAttachmentRequestQuery передается maxCountRows = 100'
+    iterations:
+      - iteration_id: '1'
+        params:
+          - name: param
+            value: пусто (null)
+      - iteration_id: '2'
+        params:
+          - name: param
+            value: 'строка "сто"'
+      - iteration_id: '3'
+        params:
+          - name: param
+            value: '-5 (меньше нуля)'
+
+  - case_id: 1bfc9c3f-e791-4fb8-8fa3-4ed6141d65a9
+    title: Изолированное выполнение поиска только по Архиву
+    description: Проверка флага findArchivedRequest
+    priority: high
+    steps:
+      - action: 'Установить findArchivedRequest=1, findExpiredDocRequest=0, findExpiredSmoRequest=0'
+        expected_result: 'Запрашиваются и обрабатываются только заявления со статусом arDraft. ГВ и СМО игнорируются.'
+
+  - case_id: c7535112-9ea9-454a-bf6e-1f81806986ae
+    title: Изолированное выполнение поиска только по ГВ
+    description: Проверка флага findExpiredDocRequest
+    priority: high
+    steps:
+      - action: 'Установить findArchivedRequest=0, findExpiredDocRequest=1, findExpiredSmoRequest=0'
+        expected_result: 'Запрашиваются и обрабатываются только заявления со статусом arCreated. Архив и СМО игнорируются.'

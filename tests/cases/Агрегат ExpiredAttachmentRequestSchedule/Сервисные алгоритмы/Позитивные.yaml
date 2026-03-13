@@ -1,50 +1,242 @@
-suite_id: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
-suite_name: Сервисные алгоритмы - Позитивные
-description: Описание
-created_at: "2026-01-12T07:22:26Z"
-status: new
-created_by: Inna Zaikovskaya
-test_cases:
-  - case_id: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
-    title: "Успешное закрытие просроченной заявки (отсчет от date_apply_reg)"
-    description: "Проверка закрытия заявки, если прошло больше expirationPeriod дней с момента date_apply_reg (countFromDateExpired = 1)"
-    steps:
-      - action: "Создать заявку прикрепления со статусом 'arDraft' и date_apply_reg = (сегодня - expirationPeriod - 1 день)"
-        expected: "Заявка успешно создана в БД"
-      - action: "Запустить джобу ExpiredAttachmentRequestScheduleFiredEvent"
-        expected: "Событие успешно обработано"
-      - action: "Проверить статус заявки в БД"
-        expected: "Статус заявки изменен на 'arApproved' (или целевой статус закрытия)"
+  suite_id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+  suite_name: EARS_Позитивные
+  description: Проверка успешного выполнения алгоритма поиска просроченных заявлений
+  created_at: '2026-03-13T10:00:00Z'
+  status: new
+  created_by: Inna Zaikovskaya
+  test_cases:
+    - case_id: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+      title: 1-2. Проверка запуска поиска просроченных заявлений. Первый запуск
+      description: Проверка старта процесса, когда записей в srv.run_control еще нет
+      priority: high
+      steps:
+        - action: 'Дождаться интервала expiredAttachmentRequestScheduleFiredAlg.run.controlTimeInterval'
+          expected_result: |-
+            Система фиксирует начало работы, создает новую запись:
+            srv.run_control.code = 'EARS'
+            srv.run_control.host = хост, запустивший команду;
+            srv.run_control.start_date = current_timestamp;
+            srv.run_control.end_date = null;
+            srv.run_control.is_running = 1;
+            srv.run_control.last_date = current_timestamp.
+      pre-conditions:
+        - action: |-
+            Выполнены условия:
+            1) run.mode = 1
+            2) текущее время >= run.beginTime и <= run.endTime
+            3) В таблице SRV.RUN_CONTROL нет записи с CODE = 'EARS'
+          expected_result: '-'
+      iterations: []
 
-  - case_id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
-    title: "Успешное закрытие просроченной заявки (отсчет от date_doctor_decision)"
-    description: "Проверка закрытия заявки, если отсчет идет от решения врача (countFromDateExpired = 0)"
-    steps:
-      - action: "Создать заявку со статусом 'arDraft' и date_doctor_decision = (сегодня - expirationPeriod - 1 день)"
-        expected: "Заявка успешно создана"
-      - action: "Запустить джобу с параметром countFromDateExpired = 0"
-        expected: "Джоба отработала без ошибок"
-      - action: "Проверить статус заявки"
-        expected: "Заявка переведена в статус просроченной/закрытой"
+    - case_id: 3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+      title: 1-2. Проверка запуска поиска просроченных заявлений. Команда зависла
+      description: Проверка сброса зависшей команды в run_control
+      priority: high
+      steps:
+        - action: 'Дождаться интервала expiredAttachmentRequestScheduleFiredAlg.run.controlTimeInterval'
+          expected_result: '-'
+        - action: |-
+            Обнаружена зависшая запись в svr.run_control
+            srv.run_control.last_date < текущие дата/время - run.resetPeriod
+            srv.run_control.code = 'EARS'
+          expected_result: |-
+            Система обновляет запись:
+            srv.run_control.start_date = current_timestamp;
+            srv.run_control.end_date = null;
+            srv.run_control.is_running = 1;
+            srv.run_control.last_date = current_timestamp.
+      pre-conditions:
+        - action: 'Условия времени и режима соблюдены. В БД есть зависшая запись EARS.'
+          expected_result: '-'
+      iterations: []
 
-  - case_id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
-    title: "Обработка лимита заявок (maxCountRows)"
-    description: "Проверка, что алгоритм обрабатывает не более maxCountRows записей за один запуск"
-    steps:
-      - action: "Создать количество просроченных заявок, превышающее maxCountRows (например, maxCountRows + 5)"
-        expected: "Заявки созданы"
-      - action: "Запустить алгоритм поиска просроченных заявок"
-        expected: "Алгоритм отработал успешно"
-      - action: "Проверить количество измененных заявок"
-        expected: "Статус изменился ровно у maxCountRows заявок, остальные остались в прежнем статусе"
+    - case_id: 4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f90
+      title: "3. Фиксация расписания. Запись зависла (статус 1)"
+      description: Сброс зависшей записи в expired_attachment_request_schedule
+      priority: high
+      steps:
+        - action: |-
+            Найдена зависшая запись (status = 1) на текущую дату.
+          expected_result: |-
+            Система сбрасывает зависшую запись:
+            date_end = current_timestamp
+            status = 3
+            error = AT_EARS_003
+            change_date = current_timestamp
+            Переходит к поиску новых записей.
+      iterations: []
 
-  - case_id: f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c
-    title: "Проверка граничного условия (ровно expirationPeriod дней)"
-    description: "Заявка, которой исполнилось ровно expirationPeriod дней, еще не считается просроченной"
-    steps:
-      - action: "Создать заявку с датой отсчета ровно (сегодня - expirationPeriod дней)"
-        expected: "Заявка создана"
-      - action: "Запустить алгоритм"
-        expected: "Алгоритм отработал успешно"
-      - action: "Проверить статус заявки"
-        expected: "Статус заявки НЕ изменился, заявка не закрыта"
+    - case_id: 5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f90a1
+      title: "3. Фиксация расписания. Создание новой записи"
+      description: Создание записи в attach.expired_attachment_request_schedule
+      priority: high
+      steps:
+        - action: |-
+            Не найдена запись со статусом 0, 1 или 2 на текущую дату.
+          expected_result: |-
+            Создается новая запись:
+            id = авто
+            date_process = текущая дата без времени
+            status = 1
+            date_start = current_timestamp
+            attach_request_count_found = 0
+            attach_request_count_change = 0
+            attach_request_count_error = 0
+      iterations: []
+
+    - case_id: 6f7a8b9c-0d1e-2f3a-4b5c-6d7e8f90a1b2
+      title: "4. Проверка заполнения обязательных параметров (Архив, ГВ, СМО)"
+      description: Успешная валидация параметров для включенных поисков
+      priority: high
+      steps:
+        - action: |-
+            В config для включенных поисков (findArchivedRequest=1, findExpiredDocRequest=1, findExpiredSmoRequest=1) заполнены соответствующие expirationPeriod и countFromDateApply.
+          expected_result: 'Переход на шаг 5'
+      iterations: []
+
+    - case_id: 7a8b9c0d-1e2f-3a4b-5c6d-7e8f90a1b2c3
+      title: "5-6. Обработка Архивных заявлений (arDraft -> arArchived)"
+      description: Поиск и изменение статуса архивных заявлений
+      priority: high
+      steps:
+        - action: 'Сформировано событие ExpiredAttachmentRequestScheduleFiredEvent для arDraft. Найдены заявления.'
+          expected_result: |-
+            1) Обновляется счетчик attach_request_count_found.
+            2) attachRequestStatus меняется на arArchived.
+            3) Формируется ExpireAttachmentRequestEvent с operationTypeForTopic = archived.
+            4) Сохраняется лог в srv.expired_attach_request_change_log.
+            5) Обновляется attach_request_count_change.
+      pre-conditions:
+        - action: 'findArchivedRequest=1, в БД есть заявления arDraft, подходящие под период.'
+          expected_result: '-'
+      iterations: []
+
+    - case_id: 8b9c0d1e-2f3a-4b5c-6d7e-8f90a1b2c3d4
+      title: "5-6. Обработка заявлений ГВ (arCreated -> arExpiredDoc)"
+      description: Поиск и изменение статуса заявлений ГВ
+      priority: high
+      steps:
+        - action: 'Сформировано событие для arCreated. Найдены заявления.'
+          expected_result: |-
+            attachRequestStatus меняется на arExpiredDoc.
+            operationTypeForTopic = expiredDoc.
+            Логируется успех, обновляются счетчики.
+      pre-conditions:
+        - action: 'findExpiredDocRequest=1, в БД есть заявления arCreated.'
+          expected_result: '-'
+      iterations: []
+
+    - case_id: 9c0d1e2f-3a4b-5c6d-7e8f-90a1b2c3d4e5
+      title: "5-6. Обработка заявлений СМО (arSmoApproving -> arExpiredSMO)"
+      description: Поиск и изменение статуса заявлений СМО
+      priority: high
+      steps:
+        - action: 'Сформировано событие для arSmoApproving (и arApproved) c attachOpenCode=addressChange.'
+          expected_result: |-
+            attachRequestStatus меняется на arExpiredSMO.
+            operationTypeForTopic = expiredSmo.
+            Логируется успех, обновляются счетчики.
+      pre-conditions:
+        - action: 'findExpiredSmoRequest=1, в БД есть заявления arSmoApproving.'
+          expected_result: '-'
+      iterations: []
+
+    - case_id: 0d1e2f3a-4b5c-6d7e-8f90-a1b2c3d4e5f6
+      title: "7-8. Проверка завершения работы команды и процесса"
+      description: Корректное закрытие сессии работы алгоритма
+      priority: high
+      steps:
+        - action: 'Все записи обработаны, алгоритм завершает работу'
+          expected_result: |-
+            1) В attach.expired_attachment_request_schedule: status = 2, date_end = current_timestamp.
+            2) В srv.run_control: end_date = current_timestamp, is_running = 0.
+      iterations: []
+
+негативные:
+  suite_id: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
+  suite_name: EARS_Негативные
+  description: Проверка альтернативных сценариев и ошибок
+  created_at: '2026-03-13T10:05:00Z'
+  status: new
+  created_by: Inna Zaikovskaya
+  test_cases:
+    - case_id: b2c3d4e5-f67a-8b9c-0d1e-2f3a4b5c6d7e
+      title: "AC.1 Ошибка при отсутствии обязательных параметров"
+      description: Проверка формирования AT_EARS_001
+      priority: high
+      steps:
+        - action: '<param>'
+          expected_result: |-
+            В attach.expired_attachment_request_schedule:
+            date_end = current_timestamp
+            status = 3
+            error = "AT_EARS_001 - Невозможно продолжить поиск . Параметр(ы) {0} не заполнен(ы) или заполнен(ы) неверно."
+      iterations:
+        - iteration_id: '1'
+          params:
+            - name: param
+              value: 'findArchivedRequest=1, но archivedPeriod не заполнен'
+        - iteration_id: '2'
+          params:
+            - name: param
+              value: 'findExpiredDocRequest=1, но countFromDateApplyExpiredDoc не 0 и не 1'
+        - iteration_id: '3'
+          params:
+            - name: param
+              value: 'findExpiredSmoRequest=1, но expirationSmoPeriod строка, а не integer'
+
+    - case_id: c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+      title: "AC.2 Непредвиденная ошибка при поиске GetExpiredAttachmentRequestQuery"
+      description: Проверка обработки падения запроса поиска
+      priority: high
+      steps:
+        - action: 'При выполнении GetExpiredAttachmentRequestQuery получена непредвиденная ошибка'
+          expected_result: |-
+            status = 3
+            error = "AT_EARS_002 - При выполнении поиска получена ошибка: {0}."
+
+    - case_id: d4e5f67a-8b9c-0d1e-2f3a-4b5c6d7e8f90
+      title: "6.4 Ошибка при остановленном приложении (AT_EARS_005)"
+      description: Приложение остановлено во время итераций
+      priority: high
+      steps:
+        - action: 'Приложение остановлено (проверка на шаге 6.4)'
+          expected_result: 'Формируется ошибка AT_EARS_005. status = 3, is_running = 0.'
+
+    - case_id: e5f67a8b-9c0d-1e2f-3a4b-5c6d7e8f90a1
+      title: "6.4 Ошибка при нарушении времени/режима работы (AT_EARS_004)"
+      description: Окончание разрешенного времени работы
+      priority: high
+      steps:
+        - action: 'текущее время > expiredAttachmentRequestScheduleFiredAlg.run.endTime'
+          expected_result: 'Формируется ошибка AT_EARS_004. Работа запрещена. status = 3.'
+
+проверка параметров:
+  suite_id: f67a8b9c-0d1e-2f3a-4b5c-6d7e8f90a1b2
+  suite_name: EARS_Проверка_параметров
+  description: Тесты граничных значений и типов параметров расписания
+  created_at: '2026-03-13T10:10:00Z'
+  status: new
+  created_by: Inna Zaikovskaya
+  test_cases:
+    - case_id: 0a1b2c3d-4e5f-67a8-b9c0-d1e2f3a4b5c6
+      title: Проверка параметра findArchivedRequest и archivedPeriod
+      description: Валидация зависимости параметров
+      priority: medium
+      steps:
+        - action: Действие
+          expected_result: Ожидаемый результат
+    - case_id: 1b2c3d4e-5f67-a8b9-c0d1-e2f3a4b5c6d7
+      title: Проверка параметра findExpiredDocRequest и expirationDocPeriod
+      description: Валидация зависимости параметров
+      priority: medium
+      steps:
+        - action: Действие
+          expected_result: Ожидаемый результат
+    - case_id: 2c3d4e5f-67a8-b9c0-d1e2-f3a4b5c6d7e8
+      title: Проверка параметра findExpiredSmoRequest и expirationSmoPeriod
+      description: Валидация зависимости параметров
+      priority: medium
+      steps:
+        - action: Действие
+          expected_result: Ожидаемый результат
