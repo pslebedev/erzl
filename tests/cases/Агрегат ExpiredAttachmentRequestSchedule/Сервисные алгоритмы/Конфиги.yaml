@@ -6,7 +6,7 @@ status: new
 created_by: Inna Zaikovskaya
 test_cases:
   - case_id: 11a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c
-    name: "Успешное чтение полного конфигурационного файла"
+    title: "Успешное чтение полного конфигурационного файла"
     description: "Проверка парсинга всех ключевых параметров из конфига джобы"
     steps:
       - action: "Передать конфигурацию с заполненными dateProcess, expirationPeriod, maxCountRows, attachRequestStatusCode, countFromDateExpired"
@@ -15,7 +15,7 @@ test_cases:
         expected: "Агрегат успешно прочитал и сохранил все переданные значения"
 
   - case_id: 22b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d
-    name: "Применение значений по умолчанию при неполном конфиге"
+    title: "Применение значений по умолчанию при неполном конфиге"
     description: "Если в конфиге отсутствуют необязательные параметры, должны примениться дефолтные значения"
     steps:
       - action: "Передать конфигурацию без указания maxCountRows и countFromDateExpired"
@@ -24,7 +24,7 @@ test_cases:
         expected: "Агрегат загружен, параметрам maxCountRows и countFromDateExpired присвоены дефолтные значения системы"
 
   - case_id: 33c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e
-    name: "Чтение конфига с минимальным maxCountRows"
+    title: "Чтение конфига с минимальным maxCountRows"
     description: "Проверка корректной инициализации при maxCountRows = 1"
     steps:
       - action: "Задать в конфиге maxCountRows = 1"
@@ -33,7 +33,7 @@ test_cases:
         expected: "Параметр maxCountRows = 1 успешно прочитан, ошибки валидации не возникло"
 
   - case_id: 44d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f
-    name: "Проверка фильтрации по attachRequestStatusCode"
+    title: "Проверка фильтрации по attachRequestStatusCode"
     description: "Убедиться, что агрегат корректно считывает целевой статус для поиска заявок"
     steps:
       - action: "Указать в конфиге attachRequestStatusCode = 'arDraft'"
